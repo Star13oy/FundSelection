@@ -1,0 +1,96 @@
+:root {
+  font-family: "Manrope", "PingFang SC", "Microsoft YaHei", sans-serif;
+  color: #1b1c1c;
+  background: #fbf9f8;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #fbf9f8;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+.card {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.nav {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.nav button {
+  border: none;
+  border-radius: 8px;
+  background: #efeded;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.nav button.active {
+  background: #745b00;
+  color: #fff;
+}
+
+.row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.grid {
+  display: grid;
+  gap: 12px;
+}
+
+.grid-2 {
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th, td {
+  text-align: left;
+  padding: 8px;
+  font-size: 14px;
+}
+
+th {
+  color: #5e5e64;
+  font-weight: 600;
+}
+
+.disclaimer {
+  color: #5e5e64;
+  font-size: 12px;
+}
+
+.tag {
+  display: inline-block;
+  border-radius: 999px;
+  padding: 2px 8px;
+  background: #e3e2e9;
+  font-size: 12px;
+}
+
+.score {
+  font-weight: 800;
+  color: #745b00;
+}

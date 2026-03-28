@@ -1,0 +1,12 @@
+.venv/
+.omc/
+.pytest_cache/
+**/.pytest_cache/
+frontend/node_modules/
+backend/.coverage
+backend/htmlcov/
+frontend/coverage/
+frontend/.vitest/
+*.pyc
+__pycache__/
+.DS_Store

@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "surface-container-low": "#f5f3f3",
+              "surface-container": "#efeded",
+              "surface-bright": "#fbf9f8",
+              "primary-fixed-dim": "#eac243",
+              "tertiary-fixed": "#ffdad6",
+              "on-primary-fixed-variant": "#574500",
+              "tertiary": "#bb171c",
+              "on-primary-container": "#483800",
+              "on-secondary-fixed": "#1a1b20",
+              "secondary": "#5e5e64",
+              "on-background": "#1b1c1c",
+              "on-tertiary": "#ffffff",
+              "surface": "#fbf9f8",
+              "surface-container-high": "#e9e8e7",
+              "on-tertiary-fixed-variant": "#93000d",
+              "primary-fixed": "#ffe089",
+              "tertiary-container": "#ff7d72",
+              "secondary-container": "#e3e2e9",
+              "error-container": "#ffdad6",
+              "on-surface-variant": "#4d4635",
+              "primary": "#745b00",
+              "secondary-fixed-dim": "#c7c6cd",
+              "on-error-container": "#93000a",
+              "surface-dim": "#dbdad9",
+              "on-primary": "#ffffff",
+              "surface-container-highest": "#e4e2e2",
+              "inverse-on-surface": "#f2f0f0",
+              "on-tertiary-container": "#7b0009",
+              "on-error": "#ffffff",
+              "inverse-primary": "#eac243",
+              "on-surface": "#1b1c1c",
+              "surface-tint": "#745b00",
+              "surface-container-lowest": "#ffffff",
+              "on-secondary-container": "#64646a",
+              "surface-variant": "#e4e2e2",
+              "background": "#fbf9f8",
+              "error": "#ba1a1a",
+              "outline-variant": "#d0c5af",
+              "on-primary-fixed": "#241a00",
+              "inverse-surface": "#303031",
+              "on-secondary-fixed-variant": "#46464c",
+              "on-tertiary-fixed": "#410002",
+              "on-secondary": "#ffffff",
+              "primary-container": "#c5a021",
+              "outline": "#7f7663",
+              "secondary-fixed": "#e3e2e9",
+              "tertiary-fixed-dim": "#ffb4ac"
+            },
+            fontFamily: {
+              "headline": ["Manrope"],
+              "body": ["Manrope"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        vertical-align: middle;
+      }
+      .glass-effect {
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(20px);
+      }
+      body {
+        font-family: 'Manrope', sans-serif;
+      }
+    </style>
+</head>
+<body class="bg-surface text-on-surface antialiased">
+<!-- TopNavBar -->
+<header class="w-full border-b-0 bg-[#fbf9f8] dark:bg-slate-900 sticky top-0 z-50">
+<div class="flex justify-between items-center px-8 h-16 w-full max-w-[1440px] mx-auto">
+<div class="flex items-center gap-8">
+<span class="text-xl font-bold text-[#1b1c1c] dark:text-white tracking-tight">基金量化选基助手</span>
+<nav class="hidden md:flex space-x-6">
+<a class="text-[#5e5e64] dark:text-slate-400 hover:text-[#745b00] transition-colors font-medium" href="#">首页</a>
+<a class="text-[#5e5e64] dark:text-slate-400 hover:text-[#745b00] transition-colors font-medium" href="#">选基</a>
+<a class="text-[#5e5e64] dark:text-slate-400 hover:text-[#745b00] transition-colors font-medium" href="#">对比</a>
+<a class="text-[#745b00] dark:text-[#c5a021] font-semibold border-b-2 border-[#745b00] pb-1" href="#">观察池</a>
+<a class="text-[#5e5e64] dark:text-slate-400 hover:text-[#745b00] transition-colors font-medium" href="#">设置</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="hidden lg:block text-xs text-secondary italic">仅供参考，不构成投资建议</div>
+<div class="flex gap-2">
+<button class="p-2 hover:bg-[#f5f3f3] dark:hover:bg-slate-800 transition-all rounded-full">
+<span class="material-symbols-outlined text-secondary">notifications</span>
+</button>
+<button class="p-2 hover:bg-[#f5f3f3] dark:hover:bg-slate-800 transition-all rounded-full">
+<span class="material-symbols-outlined text-secondary">help_outline</span>
+</button>
+</div>
+<div class="w-8 h-8 rounded-full bg-secondary-container flex items-center justify-center overflow-hidden">
+<img alt="User Avatar" data-alt="close-up portrait of a professional man in a clean studio setting with neutral background lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDvLa9oN1E3gEhkMIzw2PN6u3YGIZgK_G0BvZb0den2kxf2tn0vJb_LOFXnl0mXe1BfYU13qxV5CpMjmk12KsxPGSm2SoZtLnHR8gW-x_2qjEz8I8oG9UqN6XO_-h4Ecvt9jfvD-UM8bEitrcvYPzh0DC6g_tmb9gKvUVB-rYDZ16KNjc7DHbdJwKaoy6_pVBQl5hAxG7oEftVuE3eLuny4un2eUMq3c06AAA0fTgJwWqjhu4uMSACdlEJIrdmzahB0mv15jMaKZbk"/>
+</div>
+</div>
+</div>
+</header>
+<main class="max-w-[1440px] mx-auto px-8 py-10 space-y-12">
+<!-- Dashboard Overview: Asymmetric Bento Grid -->
+<section class="grid grid-cols-1 md:grid-cols-12 gap-6">
+<div class="md:col-span-8 space-y-2">
+<h1 class="text-4xl font-extrabold tracking-tight text-on-surface">我的观察池</h1>
+<p class="text-secondary font-label text-sm uppercase tracking-widest">Quantitative Observation Deck</p>
+</div>
+<!-- Metrics Row -->
+<div class="md:col-span-4 bg-surface-container-low p-6 rounded-xl flex flex-col justify-between">
+<span class="text-xs font-label text-secondary mb-2 uppercase font-semibold">待处理风险预警</span>
+<div class="flex items-baseline gap-3">
+<span class="text-5xl font-bold text-tertiary">03</span>
+<span class="text-sm text-on-surface-variant">高危波动点位</span>
+</div>
+</div>
+<div class="md:col-span-4 bg-surface-container-low p-6 rounded-xl">
+<span class="text-xs font-label text-secondary mb-2 uppercase font-semibold">已收藏基金总数</span>
+<div class="flex items-baseline gap-2">
+<span class="text-5xl font-bold text-on-surface">24</span>
+<span class="text-sm text-on-surface-variant">支成分基金</span>
+</div>
+<div class="mt-4 flex -space-x-2">
+<div class="w-6 h-6 rounded-full bg-primary-fixed border-2 border-surface"></div>
+<div class="w-6 h-6 rounded-full bg-secondary-container border-2 border-surface"></div>
+<div class="w-6 h-6 rounded-full bg-tertiary-fixed border-2 border-surface"></div>
+</div>
+</div>
+<div class="md:col-span-8 bg-gradient-to-br from-primary to-primary-container p-8 rounded-xl text-on-primary flex justify-between items-center relative overflow-hidden">
+<div class="relative z-10">
+<span class="text-xs font-label opacity-80 mb-2 uppercase font-semibold tracking-wider">全池平均量化评分</span>
+<div class="flex items-baseline gap-4">
+<span class="text-6xl font-extrabold">88.5</span>
+<div class="flex items-center text-sm bg-white/20 px-2 py-0.5 rounded-full">
+<span class="material-symbols-outlined text-xs mr-1">trending_up</span>
+                            +1.2%
+                        </div>
+</div>
+</div>
+<div class="absolute right-0 top-0 h-full w-1/2 opacity-10 pointer-events-none">
+<svg class="h-full w-full" viewbox="0 0 200 100">
+<path d="M0 80 Q 40 10, 80 50 T 160 30 T 240 70" fill="none" stroke="white" stroke-width="2"></path>
+</svg>
+</div>
+</div>
+</section>
+<!-- Main Watchlist Canvas -->
+<section class="space-y-6">
+<div class="flex justify-between items-end border-b border-outline-variant/15 pb-4">
+<div class="space-y-1">
+<h2 class="text-2xl font-bold tracking-tight">核心观察名单</h2>
+<p class="text-sm text-secondary">基于最新量化模型生成的实时异动监控</p>
+</div>
+<div class="flex gap-2">
+<button class="flex items-center gap-2 px-4 py-2 bg-surface-container-high rounded-md text-sm font-medium hover:bg-surface-container-highest transition-colors">
+<span class="material-symbols-outlined text-sm">filter_list</span>
+                        筛选
+                    </button>
+<button class="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary rounded-md text-sm font-medium hover:opacity-90 transition-opacity">
+<span class="material-symbols-outlined text-sm">add</span>
+                        添加基金
+                    </button>
+</div>
+</div>
+<!-- Fund Cards Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+<!-- Card 1 -->
+<div class="bg-surface-container-lowest border border-outline-variant/10 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+<div class="flex justify-between items-start mb-6">
+<div>
+<div class="flex items-center gap-2 mb-1">
+<h3 class="text-lg font-bold">易方达蓝筹精选混合</h3>
+<span class="text-[10px] font-label px-1.5 py-0.5 bg-secondary-fixed text-on-secondary-fixed-variant rounded">005827</span>
+</div>
+<div class="flex gap-2">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-tertiary-fixed text-on-tertiary-fixed-variant uppercase">
+<span class="material-symbols-outlined text-[12px] mr-1">warning</span>
+                                    回撤预警
+                                </span>
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-surface-container-high text-secondary uppercase">
+                                    白酒消费
+                                </span>
+</div>
+</div>
+<div class="text-right">
+<div class="text-3xl font-extrabold text-primary">92</div>
+<div class="text-[10px] font-label text-secondary uppercase tracking-tighter">实时量化分</div>
+</div>
+</div>
+<div class="flex items-center gap-4 h-16 mb-6">
+<div class="flex-1 h-full bg-surface-container-low rounded-lg relative overflow-hidden flex items-end">
+<div class="w-full h-1/2 bg-gradient-to-t from-primary/10 to-transparent"></div>
+<svg class="absolute inset-0 w-full h-full" preserveaspectratio="none">
+<path d="M0 40 Q 25 35, 50 45 T 100 20 T 150 50 T 200 15 T 250 40 T 300 30 T 400 60" fill="none" stroke="#745b00" stroke-width="2"></path>
+</svg>
+</div>
+<div class="w-24 text-right">
+<div class="text-sm font-bold text-tertiary">+2.45%</div>
+<div class="text-[10px] font-label text-secondary">近7日涨跌</div>
+</div>
+</div>
+<div class="flex justify-between items-center pt-4 border-t border-outline-variant/10">
+<div class="flex gap-4">
+<button class="text-xs font-bold text-primary hover:underline flex items-center">
+<span class="material-symbols-outlined text-sm mr-1">analytics</span>
+                                研报详情
+                            </button>
+<button class="text-xs font-bold text-secondary hover:text-primary flex items-center">
+<span class="material-symbols-outlined text-sm mr-1">compare_arrows</span>
+                                跳转对比
+                            </button>
+</div>
+<button class="text-secondary hover:text-error transition-colors">
+<span class="material-symbols-outlined text-sm">delete_outline</span>
+</button>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="bg-surface-container-lowest border border-outline-variant/10 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+<div class="flex justify-between items-start mb-6">
+<div>
+<div class="flex items-center gap-2 mb-1">
+<h3 class="text-lg font-bold">华夏中证500ETF联接</h3>
+<span class="text-[10px] font-label px-1.5 py-0.5 bg-secondary-fixed text-on-secondary-fixed-variant rounded">001052</span>
+</div>
+<div class="flex gap-2">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-primary-fixed text-on-primary-fixed-variant uppercase">
+<span class="material-symbols-outlined text-[12px] mr-1">arrow_upward</span>
+                                    评分上调
+                                </span>
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-surface-container-high text-secondary uppercase">
+                                    中盘价值
+                                </span>
+</div>
+</div>
+<div class="text-right">
+<div class="text-3xl font-extrabold text-primary">85</div>
+<div class="text-[10px] font-label text-secondary uppercase tracking-tighter">实时量化分</div>
+</div>
+</div>
+<div class="flex items-center gap-4 h-16 mb-6">
+<div class="flex-1 h-full bg-surface-container-low rounded-lg relative overflow-hidden flex items-end">
+<div class="w-full h-2/3 bg-gradient-to-t from-primary/10 to-transparent"></div>
+<svg class="absolute inset-0 w-full h-full" preserveaspectratio="none">
+<path d="M0 50 L 50 30 L 100 40 L 150 20 L 200 10 L 250 15 L 400 5" fill="none" stroke="#745b00" stroke-width="2"></path>
+</svg>
+</div>
+<div class="w-24 text-right">
+<div class="text-sm font-bold text-tertiary">+4.12%</div>
+<div class="text-[10px] font-label text-secondary">近7日涨跌</div>
+</div>
+</div>
+<div class="flex justify-between items-center pt-4 border-t border-outline-variant/10">
+<div class="flex gap-4">
+<button class="text-xs font-bold text-primary hover:underline flex items-center">
+<span class="material-symbols-outlined text-sm mr-1">analytics</span>
+                                研报详情
+                            </button>
+<button class="text-xs font-bold text-secondary hover:text-primary flex items-center">
+<span class="material-symbols-outlined text-sm mr-1">compare_arrows</span>
+                                跳转对比
+                            </button>
+</div>
+<button class="text-secondary hover:text-error transition-colors">
+<span class="material-symbols-outlined text-sm">delete_outline</span>
+</button>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="bg-surface-container-lowest border border-outline-variant/10 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+<div class="flex justify-between items-start mb-6">
+<div>
+<div class="flex items-center gap-2 mb-1">
+<h3 class="text-lg font-bold">中欧医疗健康混合A</h3>
+<span class="text-[10px] font-label px-1.5 py-0.5 bg-secondary-fixed text-on-secondary-fixed-variant rounded">003095</span>
+</div>
+<div class="flex gap-2">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-tertiary-fixed text-on-tertiary-fixed-variant uppercase">
+<span class="material-symbols-outlined text-[12px] mr-1">trending_down</span>
+                                    波动异常
+                                </span>
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-surface-container-high text-secondary uppercase">
+                                    医疗服务
+                                </span>
+</div>
+</div>
+<div class="text-right">
+<div class="text-3xl font-extrabold text-secondary">72</div>
+<div class="text-[10px] font-label text-secondary uppercase tracking-tighter">实时量化分</div>
+</div>
+</div>
+<div class="flex items-center gap-4 h-16 mb-6">
+<div class="flex-1 h-full bg-surface-container-low rounded-lg relative overflow-hidden flex items-end">
+<svg class="absolute inset-0 w-full h-full" preserveaspectratio="none">
+<path d="M0 20 L 50 25 L 100 60 L 150 55 L 200 70 L 250 65 L 400 80" fill="none" stroke="#ba1a1a" stroke-width="2"></path>
+</svg>
+</div>
+<div class="w-24 text-right">
+<div class="text-sm font-bold text-error">-5.33%</div>
+<div class="text-[10px] font-label text-secondary">近7日涨跌</div>
+</div>
+</div>
+<div class="flex justify-between items-center pt-4 border-t border-outline-variant/10">
+<div class="flex gap-4">
+<button class="text-xs font-bold text-primary hover:underline flex items-center">
+<span class="material-symbols-outlined text-sm mr-1">analytics</span>
+                                研报详情
+                            </button>
+<button class="text-xs font-bold text-secondary hover:text-primary flex items-center">
+<span class="material-symbols-outlined text-sm mr-1">compare_arrows</span>
+                                跳转对比
+                            </button>
+</div>
+<button class="text-secondary hover:text-error transition-colors">
+<span class="material-symbols-outlined text-sm">delete_outline</span>
+</button>
+</div>
+</div>
+<!-- Add New Card Placeholder -->
+<div class="border-2 border-dashed border-outline-variant/30 rounded-xl p-6 flex flex-col items-center justify-center text-secondary hover:border-primary/50 hover:text-primary transition-all cursor-pointer group">
+<span class="material-symbols-outlined text-4xl mb-2 group-hover:scale-110 transition-transform">add_circle</span>
+<span class="text-sm font-bold">导入更多关注基金</span>
+<span class="text-[10px] mt-1 opacity-60">支持代码搜索或一键同步券商持仓</span>
+</div>
+</div>
+</section>
+<!-- Bottom Section: Recently Viewed & Market Context -->
+<section class="grid grid-cols-1 md:grid-cols-12 gap-10">
+<!-- Recently Viewed -->
+<div class="md:col-span-8 space-y-4">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-xl">history</span>
+<h2 class="text-lg font-bold">最近浏览</h2>
+</div>
+<div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+<div class="bg-surface-container-low p-4 rounded-lg hover:bg-surface-container-high transition-colors cursor-pointer group">
+<div class="text-[10px] text-secondary mb-1">001631</div>
+<div class="text-sm font-bold truncate group-hover:text-primary">天弘创业板ETF</div>
+<div class="text-xs text-tertiary mt-2 font-label font-bold">+0.82%</div>
+</div>
+<div class="bg-surface-container-low p-4 rounded-lg hover:bg-surface-container-high transition-colors cursor-pointer group">
+<div class="text-[10px] text-secondary mb-1">510300</div>
+<div class="text-sm font-bold truncate group-hover:text-primary">华泰柏瑞沪深300</div>
+<div class="text-xs text-tertiary mt-2 font-label font-bold">+1.15%</div>
+</div>
+<div class="bg-surface-container-low p-4 rounded-lg hover:bg-surface-container-high transition-colors cursor-pointer group">
+<div class="text-[10px] text-secondary mb-1">000001</div>
+<div class="text-sm font-bold truncate group-hover:text-primary">华夏成长混合</div>
+<div class="text-xs text-error mt-2 font-label font-bold">-0.24%</div>
+</div>
+<div class="bg-surface-container-low p-4 rounded-lg hover:bg-surface-container-high transition-colors cursor-pointer group">
+<div class="text-[10px] text-secondary mb-1">110011</div>
+<div class="text-sm font-bold truncate group-hover:text-primary">易方达中小盘</div>
+<div class="text-xs text-tertiary mt-2 font-label font-bold">+2.30%</div>
+</div>
+</div>
+</div>
+<!-- Quantitative Digest -->
+<div class="md:col-span-4 bg-surface-container-highest/50 p-6 rounded-xl border border-outline-variant/5">
+<h3 class="text-sm font-bold mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary-container">bolt</span>
+                    量化日报摘要
+                </h3>
+<ul class="space-y-4">
+<li class="flex gap-3">
+<div class="w-1 h-auto bg-primary rounded-full"></div>
+<div class="space-y-1">
+<p class="text-xs font-bold">风格转换预警</p>
+<p class="text-[10px] text-secondary leading-relaxed">当前市场流动性向中盘成长回归，建议关注相关评分上调品种。</p>
+</div>
+</li>
+<li class="flex gap-3">
+<div class="w-1 h-auto bg-tertiary rounded-full"></div>
+<div class="space-y-1">
+<p class="text-xs font-bold">波动率监控</p>
+<p class="text-[10px] text-secondary leading-relaxed">医疗板块平均回撤已达模型阈值，进入超跌博弈区间。</p>
+</div>
+</li>
+</ul>
+<button class="w-full mt-6 py-2 border border-outline-variant text-[10px] font-bold uppercase tracking-widest hover:bg-white transition-colors">
+                    查看完整量化周报
+                </button>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="w-full py-12 border-t border-[#d0c5af]/15 bg-[#fbf9f8] dark:bg-slate-950">
+<div class="flex flex-col items-center justify-center space-y-4 px-8 w-full text-center">
+<nav class="flex space-x-6">
+<a class="text-xs text-[#5e5e64] dark:text-slate-500 hover:text-[#745b00] transition-colors" href="#">关于我们</a>
+<a class="text-xs text-[#5e5e64] dark:text-slate-500 hover:text-[#745b00] transition-colors" href="#">服务协议</a>
+<a class="text-xs text-[#5e5e64] dark:text-slate-500 hover:text-[#745b00] transition-colors" href="#">隐私政策</a>
+<a class="text-xs text-[#5e5e64] dark:text-slate-500 hover:text-[#745b00] transition-colors" href="#">风险揭示书</a>
+</nav>
+<p class="text-xs font-label leading-relaxed text-[#5e5e64] dark:text-slate-500 max-w-2xl">
+                © 2024 基金量化选基助手 | 市场有风险，投资需谨慎。本平台数据仅供参考，不构成任何投资建议。
+            </p>
+</div>
+</footer>
+</body></html>

@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "surface-container-low": "#f5f3f3",
+                        "surface-container": "#efeded",
+                        "surface-bright": "#fbf9f8",
+                        "primary-fixed-dim": "#eac243",
+                        "tertiary-fixed": "#ffdad6",
+                        "on-primary-fixed-variant": "#574500",
+                        "tertiary": "#bb171c",
+                        "on-primary-container": "#483800",
+                        "on-secondary-fixed": "#1a1b20",
+                        "secondary": "#5e5e64",
+                        "on-background": "#1b1c1c",
+                        "on-tertiary": "#ffffff",
+                        "surface": "#fbf9f8",
+                        "surface-container-high": "#e9e8e7",
+                        "on-tertiary-fixed-variant": "#93000d",
+                        "primary-fixed": "#ffe089",
+                        "tertiary-container": "#ff7d72",
+                        "secondary-container": "#e3e2e9",
+                        "error-container": "#ffdad6",
+                        "on-surface-variant": "#4d4635",
+                        "primary": "#745b00",
+                        "secondary-fixed-dim": "#c7c6cd",
+                        "on-error-container": "#93000a",
+                        "surface-dim": "#dbdad9",
+                        "on-primary": "#ffffff",
+                        "surface-container-highest": "#e4e2e2",
+                        "inverse-on-surface": "#f2f0f0",
+                        "on-tertiary-container": "#7b0009",
+                        "on-error": "#ffffff",
+                        "inverse-primary": "#eac243",
+                        "on-surface": "#1b1c1c",
+                        "surface-tint": "#745b00",
+                        "surface-container-lowest": "#ffffff",
+                        "on-secondary-container": "#64646a",
+                        "surface-variant": "#e4e2e2",
+                        "background": "#fbf9f8",
+                        "error": "#ba1a1a",
+                        "outline-variant": "#d0c5af",
+                        "on-primary-fixed": "#241a00",
+                        "inverse-surface": "#303031",
+                        "on-secondary-fixed-variant": "#46464c",
+                        "on-tertiary-fixed": "#410002",
+                        "on-secondary": "#ffffff",
+                        "primary-container": "#c5a021",
+                        "outline": "#7f7663",
+                        "secondary-fixed": "#e3e2e9",
+                        "tertiary-fixed-dim": "#ffb4ac"
+                    },
+                    fontFamily: {
+                        "headline": ["Manrope"],
+                        "body": ["Manrope"],
+                        "label": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+        }
+        .hero-gradient {
+            background: linear-gradient(135deg, #745b00 0%, #c5a021 100%);
+        }
+        body {
+            background-color: #fbf9f8;
+            color: #1b1c1c;
+            font-family: 'Manrope', sans-serif;
+        }
+    </style>
+</head>
+<body class="antialiased selection:bg-primary-fixed selection:text-on-primary-fixed">
+<!-- Top Navigation Bar -->
+<header class="w-full bg-[#fbf9f8] border-b-0 sticky top-0 z-50">
+<nav class="flex justify-between items-center px-8 h-16 w-full max-w-[1440px] mx-auto">
+<div class="flex items-center gap-12">
+<span class="text-xl font-bold text-[#1b1c1c] tracking-tight">基金量化选基助手</span>
+<div class="hidden md:flex items-center gap-8">
+<a class="text-[#5e5e64] hover:text-[#745b00] transition-colors" href="#">首页</a>
+<a class="text-[#5e5e64] hover:text-[#745b00] transition-colors" href="#">选基</a>
+<a class="text-[#745b00] font-semibold border-b-2 border-[#745b00] pb-1" href="#">对比</a>
+<a class="text-[#5e5e64] hover:text-[#745b00] transition-colors" href="#">观察池</a>
+<a class="text-[#5e5e64] hover:text-[#745b00] transition-colors" href="#">设置</a>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<span class="hidden lg:block text-xs text-secondary font-label">仅供参考，不构成投资建议</span>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-secondary hover:bg-[#f5f3f3] p-2 rounded-full transition-all">notifications</button>
+<button class="material-symbols-outlined text-secondary hover:bg-[#f5f3f3] p-2 rounded-full transition-all">help_outline</button>
+<div class="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center overflow-hidden">
+<img alt="User Avatar" class="w-full h-full object-cover" data-alt="clean professional avatar icon for a financial analyst user" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBo3bxQfcVr3QkuVOxpfWAOY41PU4hIU6U4OWIqb3cldGPTQ4P6hEbrqlZBfQaIQwVD_z7msIW69bFU6wTaTfzeAVhWvjPlVOKmfpfVEcXpmI3WuZHYlc29D1f77WfefF4WcTuJBVVu2qbUOJsLSNcGOf00dHuaZmmhr0pFQ1hEdadIEcXs-w9vMfhEZfRbKebVD5KmKnD-qzWXnvJ9HQuSZ0EiKRGbLO2EflZtiT2Y4gCawcDvJ1g-h4mdMAO4WoGGE5fyNgsnQ0A"/>
+</div>
+</div>
+</div>
+</nav>
+</header>
+<main class="max-w-[1440px] mx-auto px-8 py-12">
+<!-- Page Header -->
+<div class="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6">
+<div>
+<h1 class="text-4xl font-extrabold tracking-tight mb-2">基金深度量化对比</h1>
+<p class="text-secondary font-label">正在对比 2 只处于“进攻型”风格的主动权益类基金</p>
+</div>
+<div class="flex gap-4">
+<button class="flex items-center gap-2 px-6 py-3 rounded-md bg-surface-container-lowest border border-outline-variant/15 text-primary font-semibold hover:bg-surface-container-low transition-all">
+<span class="material-symbols-outlined text-sm">add</span>
+                    添加对比基金
+                </button>
+<button class="px-6 py-3 rounded-md hero-gradient text-white font-semibold shadow-xl shadow-primary/10 hover:opacity-90 active:scale-[0.99] transition-all">
+                    下载分析报告
+                </button>
+</div>
+</div>
+<!-- Section 1: Fund Overview Bento Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-16">
+<!-- Fund A Card -->
+<div class="bg-surface-container-lowest p-8 rounded-xl relative overflow-hidden group">
+<div class="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-bl-full -mr-16 -mt-16 transition-transform group-hover:scale-110"></div>
+<div class="relative z-10">
+<div class="flex justify-between items-start mb-6">
+<span class="px-3 py-1 rounded bg-secondary-container text-on-secondary-container text-xs font-label">001234.OF</span>
+<div class="text-right">
+<span class="text-xs text-secondary block font-label uppercase">综合量化评分</span>
+<span class="text-4xl font-extrabold text-primary tracking-tighter">9.2</span>
+</div>
+</div>
+<h2 class="text-2xl font-bold mb-4">华泰柏瑞沪深300ETF</h2>
+<div class="flex gap-2 mb-8">
+<span class="px-2 py-0.5 rounded text-[10px] bg-primary-fixed text-on-primary-fixed font-semibold">蓝筹大盘</span>
+<span class="px-2 py-0.5 rounded text-[10px] bg-surface-container-high text-secondary font-semibold">低换手率</span>
+<span class="px-2 py-0.5 rounded text-[10px] bg-surface-container-high text-secondary font-semibold">高分红</span>
+</div>
+<div class="grid grid-cols-3 gap-4 border-t border-outline-variant/10 pt-6">
+<div>
+<p class="text-[10px] text-secondary font-label mb-1">近一年收益</p>
+<p class="text-lg font-bold text-tertiary">+12.45%</p>
+</div>
+<div>
+<p class="text-[10px] text-secondary font-label mb-1">最大回撤</p>
+<p class="text-lg font-bold text-on-surface">-8.12%</p>
+</div>
+<div>
+<p class="text-[10px] text-secondary font-label mb-1">夏普比率</p>
+<p class="text-lg font-bold text-on-surface">1.84</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Fund B Card -->
+<div class="bg-surface-container-lowest p-8 rounded-xl relative overflow-hidden group">
+<div class="absolute top-0 right-0 w-32 h-32 bg-secondary/5 rounded-bl-full -mr-16 -mt-16 transition-transform group-hover:scale-110"></div>
+<div class="relative z-10">
+<div class="flex justify-between items-start mb-6">
+<span class="px-3 py-1 rounded bg-secondary-container text-on-secondary-container text-xs font-label">005678.OF</span>
+<div class="text-right">
+<span class="text-xs text-secondary block font-label uppercase">综合量化评分</span>
+<span class="text-4xl font-extrabold text-secondary tracking-tighter">8.7</span>
+</div>
+</div>
+<h2 class="text-2xl font-bold mb-4">易方达蓝筹精选混合</h2>
+<div class="flex gap-2 mb-8">
+<span class="px-2 py-0.5 rounded text-[10px] bg-primary-fixed text-on-primary-fixed font-semibold">成长龙头</span>
+<span class="px-2 py-0.5 rounded text-[10px] bg-surface-container-high text-secondary font-semibold">高集中度</span>
+<span class="px-2 py-0.5 rounded text-[10px] bg-surface-container-high text-secondary font-semibold">中度换手</span>
+</div>
+<div class="grid grid-cols-3 gap-4 border-t border-outline-variant/10 pt-6">
+<div>
+<p class="text-[10px] text-secondary font-label mb-1">近一年收益</p>
+<p class="text-lg font-bold text-tertiary">+15.82%</p>
+</div>
+<div>
+<p class="text-[10px] text-secondary font-label mb-1">最大回撤</p>
+<p class="text-lg font-bold text-on-surface">-12.40%</p>
+</div>
+<div>
+<p class="text-[10px] text-secondary font-label mb-1">夏普比率</p>
+<p class="text-lg font-bold text-on-surface">1.42</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Section 2: Chart Comparison & Radar -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-16">
+<!-- Returns & Drawdown Chart Mockup -->
+<div class="lg:col-span-2 bg-surface p-8 rounded-xl border border-outline-variant/10">
+<div class="flex items-center justify-between mb-8">
+<h3 class="text-lg font-bold">收益/回撤曲线联动对比</h3>
+<div class="flex gap-4">
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 rounded-full bg-primary"></span>
+<span class="text-xs font-label text-secondary">基金 A</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 rounded-full bg-secondary"></span>
+<span class="text-xs font-label text-secondary">基金 B</span>
+</div>
+</div>
+</div>
+<div class="aspect-[16/7] relative w-full bg-surface-container-low/50 rounded-lg flex items-end px-4 py-8 overflow-hidden">
+<!-- Simplified Visual Representation of a Line Chart -->
+<svg class="absolute inset-0 w-full h-full p-8 opacity-80" viewbox="0 0 800 200">
+<path d="M0 150 Q 100 130 200 160 T 400 100 T 600 120 T 800 60" fill="none" stroke="#745b00" stroke-width="3"></path>
+<path d="M0 160 Q 150 140 300 170 T 500 80 T 700 110 T 800 40" fill="none" stroke="#5e5e64" stroke-dasharray="4" stroke-width="2"></path>
+</svg>
+<!-- Y-Axis Labels -->
+<div class="absolute left-4 top-8 bottom-8 flex flex-col justify-between text-[10px] text-secondary/60 font-label">
+<span>20%</span><span>10%</span><span>0%</span><span>-10%</span>
+</div>
+<!-- X-Axis Labels -->
+<div class="flex justify-between w-full text-[10px] text-secondary/60 font-label mt-4">
+<span>2023-01</span><span>2023-06</span><span>2023-12</span><span>2024-05</span>
+</div>
+</div>
+</div>
+<!-- Factor Radar Comparison -->
+<div class="bg-surface p-8 rounded-xl border border-outline-variant/10">
+<h3 class="text-lg font-bold mb-8">风格因子雷达</h3>
+<div class="aspect-square relative flex items-center justify-center">
+<!-- Radar Chart Mockup -->
+<div class="absolute inset-0 flex items-center justify-center">
+<div class="w-full h-full rounded-full border border-outline-variant/20 border-dashed"></div>
+<div class="absolute w-3/4 h-3/4 rounded-full border border-outline-variant/20 border-dashed"></div>
+<div class="absolute w-1/2 h-1/2 rounded-full border border-outline-variant/20 border-dashed"></div>
+</div>
+<svg class="w-full h-full relative z-10" viewbox="0 0 200 200">
+<!-- Pentagon Mesh -->
+<polygon fill="none" points="100,20 180,75 150,165 50,165 20,75" stroke="#d0c5af" stroke-width="0.5"></polygon>
+<!-- Fund A Shape -->
+<polygon fill="#745b00" fill-opacity="0.3" points="100,40 160,85 130,140 70,145 40,85" stroke="#745b00" stroke-width="2"></polygon>
+<!-- Fund B Shape -->
+<polygon fill="#5e5e64" fill-opacity="0.2" points="100,30 140,75 160,155 60,150 50,95" stroke="#5e5e64" stroke-width="1.5"></polygon>
+</svg>
+<!-- Labels -->
+<span class="absolute top-0 text-[10px] font-bold text-secondary">盈利能力</span>
+<span class="absolute right-0 top-1/4 text-[10px] font-bold text-secondary">市值风格</span>
+<span class="absolute bottom-0 right-1/4 text-[10px] font-bold text-secondary">动量</span>
+<span class="absolute bottom-0 left-1/4 text-[10px] font-bold text-secondary">估值</span>
+<span class="absolute left-0 top-1/4 text-[10px] font-bold text-secondary">波动性</span>
+</div>
+<p class="mt-6 text-xs text-secondary leading-relaxed font-label">
+<span class="font-bold text-primary">基金 A</span> 在盈利能力和估值因子上表现突出，属于稳健价值派；<span class="font-bold text-secondary">基金 B</span> 动量效应更强。
+                </p>
+</div>
+</div>
+<!-- Section 3: Deep Metrics Table -->
+<div class="bg-surface-container-lowest rounded-xl overflow-hidden mb-16 shadow-sm border border-outline-variant/10">
+<div class="px-8 py-6 border-b border-outline-variant/10 bg-surface-container-low/30">
+<h3 class="text-lg font-bold">深度量化指标拆解</h3>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low/50">
+<th class="px-8 py-4 text-xs font-bold text-secondary uppercase tracking-wider font-label">指标分类</th>
+<th class="px-8 py-4 text-xs font-bold text-secondary uppercase tracking-wider font-label">量化维度</th>
+<th class="px-8 py-4 text-xs font-bold text-primary uppercase tracking-wider font-label text-center">华泰柏瑞沪深300 (A)</th>
+<th class="px-8 py-4 text-xs font-bold text-secondary uppercase tracking-wider font-label text-center">易方达蓝筹精选 (B)</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/10">
+<tr class="hover:bg-surface-container-low/20 transition-colors">
+<td class="px-8 py-4 align-top font-bold text-sm bg-surface-container-low/10" rowspan="3">风险调整收益</td>
+<td class="px-8 py-4 text-sm text-on-surface-variant font-label">夏普比率 (Sharpe)</td>
+<td class="px-8 py-4 text-sm font-bold text-center">1.84</td>
+<td class="px-8 py-4 text-sm font-bold text-center">1.42</td>
+</tr>
+<tr class="hover:bg-surface-container-low/20 transition-colors">
+<td class="px-8 py-4 text-sm text-on-surface-variant font-label">信息比率 (Information)</td>
+<td class="px-8 py-4 text-sm font-bold text-center">0.95</td>
+<td class="px-8 py-4 text-sm font-bold text-center">1.12</td>
+</tr>
+<tr class="hover:bg-surface-container-low/20 transition-colors">
+<td class="px-8 py-4 text-sm text-on-surface-variant font-label">卡玛比率 (Calmar)</td>
+<td class="px-8 py-4 text-sm font-bold text-center">1.53</td>
+<td class="px-8 py-4 text-sm font-bold text-center">1.28</td>
+</tr>
+<tr class="hover:bg-surface-container-low/20 transition-colors">
+<td class="px-8 py-4 align-top font-bold text-sm bg-surface-container-low/10" rowspan="2">波动与流动性</td>
+<td class="px-8 py-4 text-sm text-on-surface-variant font-label">年化波动率</td>
+<td class="px-8 py-4 text-sm font-bold text-center">14.2%</td>
+<td class="px-8 py-4 text-sm font-bold text-center">21.5%</td>
+</tr>
+<tr class="hover:bg-surface-container-low/20 transition-colors">
+<td class="px-8 py-4 text-sm text-on-surface-variant font-label">日均换手率</td>
+<td class="px-8 py-4 text-sm font-bold text-center">0.45%</td>
+<td class="px-8 py-4 text-sm font-bold text-center">1.82%</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Section 4: AI Intelligent Conclusion -->
+<div class="hero-gradient p-1 rounded-2xl">
+<div class="bg-surface-container-lowest rounded-[calc(1rem-2px)] p-8 flex flex-col md:flex-row gap-8 items-center">
+<div class="flex-shrink-0 w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-4xl text-primary" style="font-variation-settings: 'FILL' 1;">insights</span>
+</div>
+<div class="flex-grow">
+<h3 class="text-xl font-bold mb-3 flex items-center gap-2">
+                        智能对比量化结论
+                        <span class="px-2 py-0.5 rounded-full bg-primary-fixed text-[10px] text-on-primary-fixed uppercase tracking-wider">Quant Alpha</span>
+</h3>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+<div>
+<p class="text-sm font-bold text-primary mb-2">● 投资风格差异</p>
+<p class="text-sm text-secondary leading-relaxed">基金 A 偏向<strong>价值稳健</strong>，其持仓中高股息资产占比 42%，适合风险承受能力中等的长期投资者。基金 B 展现出更强的<strong>激进成长</strong>属性，Alpha 贡献主要来自行业轮动。</p>
+</div>
+<div>
+<p class="text-sm font-bold text-secondary mb-2">● 专家配置建议</p>
+<p class="text-sm text-secondary leading-relaxed">在当前宏观利率下行周期中，<strong>基金 A</strong> 的防御性更佳。若预期市场成交额重回万亿，<strong>基金 B</strong> 的高弹性特征将带来显著超额收益。</p>
+</div>
+</div>
+</div>
+<div class="flex-shrink-0">
+<button class="px-8 py-4 rounded-lg bg-on-surface text-white font-bold hover:bg-black transition-all">一键加入自选</button>
+</div>
+</div>
+</div>
+</main>
+<!-- Footer -->
+<footer class="w-full py-12 border-t border-[#d0c5af]/15 bg-[#fbf9f8] mt-12">
+<div class="flex flex-col items-center justify-center space-y-4 px-8 w-full text-center">
+<p class="text-xs font-label leading-relaxed text-[#5e5e64]">
+                © 2024 基金量化选基助手 | 市场有风险，投资需谨慎。本平台数据仅供参考，不构成任何投资建议。
+            </p>
+<div class="flex gap-6">
+<a class="text-xs text-[#5e5e64] hover:text-[#745b00] transition-colors" href="#">关于我们</a>
+<a class="text-xs text-[#5e5e64] hover:text-[#745b00] transition-colors" href="#">服务协议</a>
+<a class="text-xs text-[#5e5e64] hover:text-[#745b00] transition-colors" href="#">隐私政策</a>
+<a class="text-xs text-[#5e5e64] hover:text-[#745b00] transition-colors" href="#">风险揭示书</a>
+</div>
+</div>
+</footer>
+</body></html>

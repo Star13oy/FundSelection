@@ -1,0 +1,171 @@
+openapi: 3.1.0
+info:
+  title: Fund Quant API
+  version: 0.2.0
+  description: A股基金量化选基MVP接口规范（评审会版本）
+servers:
+  - url: http://localhost:8000
+paths:
+  /health:
+    get:
+      summary: 健康检查
+      responses:
+        '200':
+          description: OK
+  /api/v1/funds:
+    get:
+      summary: 基金筛选与评分列表
+      parameters:
+        - in: query
+          name: channel
+          schema: { type: string, enum: [场内, 场外] }
+        - in: query
+          name: category
+          schema: { type: string }
+        - in: query
+          name: min_years
+          schema: { type: number }
+        - in: query
+          name: max_fee
+          schema: { type: number }
+        - in: query
+          name: risk_profile
+          schema: { type: string, enum: [保守, 均衡, 进取], default: 均衡 }
+        - in: query
+          name: keyword
+          schema: { type: string }
+        - in: query
+          name: sort_by
+          schema: { type: string, enum: [final_score, base_score, policy_score, one_year_return, max_drawdown, fee], default: final_score }
+        - in: query
+          name: sort_order
+          schema: { type: string, enum: [asc, desc], default: desc }
+        - in: query
+          name: page
+          schema: { type: integer, minimum: 1, default: 1 }
+        - in: query
+          name: page_size
+          schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+      responses:
+        '200':
+          description: 基金评分分页结果
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items, total, page, page_size]
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/FundScore'
+                  total: { type: integer }
+                  page: { type: integer }
+                  page_size: { type: integer }
+  /api/v1/funds/{code}:
+    get:
+      summary: 单基金详情
+      parameters:
+        - in: path
+          name: code
+          required: true
+          schema: { type: string }
+        - in: query
+          name: risk_profile
+          schema: { type: string, enum: [保守, 均衡, 进取], default: 均衡 }
+      responses:
+        '200':
+          description: 基金详情
+        '404':
+          description: 未找到
+  /api/v1/compare:
+    get:
+      summary: 基金对比（2-5只）
+      parameters:
+        - in: query
+          name: codes
+          required: true
+          schema:
+            type: array
+            minItems: 2
+            maxItems: 5
+            items: { type: string }
+            style: form
+            explode: true
+        - in: query
+          name: risk_profile
+          schema: { type: string, enum: [保守, 均衡, 进取], default: 均衡 }
+      responses:
+        '200':
+          description: 对比结果
+        '400':
+          description: 参数错误
+  /api/v1/watchlist:
+    get:
+      summary: 观察池列表（含告警）
+      parameters:
+        - in: query
+          name: risk_profile
+          schema: { type: string, enum: [保守, 均衡, 进取], default: 均衡 }
+      responses:
+        '200':
+          description: 观察池
+    post:
+      summary: 加入观察池
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [code]
+              properties:
+                code: { type: string }
+      responses:
+        '200':
+          description: 加入成功
+        '404':
+          description: 基金不存在
+  /api/v1/watchlist/{code}:
+    delete:
+      summary: 从观察池移除
+      parameters:
+        - in: path
+          name: code
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: 移除成功
+  /api/v1/policy/validate-timestamps:
+    post:
+      summary: 政策时间戳校验（防未来函数）
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [policy_id, published_at, effective_from, observed_at]
+              properties:
+                policy_id: { type: string }
+                published_at: { type: string, description: ISO-8601 }
+                effective_from: { type: string, description: ISO-8601 }
+                observed_at: { type: string, description: ISO-8601 }
+      responses:
+        '200':
+          description: 校验结果
+components:
+  schemas:
+    FundScore:
+      type: object
+      required: [code, name, final_score, base_score, policy_score, overlay_weight, explanation]
+      properties:
+        code: { type: string }
+        name: { type: string }
+        final_score: { type: number }
+        base_score: { type: number }
+        policy_score: { type: number }
+        overlay_weight: { type: number }
+        explanation:
+          type: object
