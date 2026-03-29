@@ -46,7 +46,7 @@ describe("api client", () => {
 
  expect(result).toEqual(payload);
  const calledUrl = vi.mocked(fetch).mock.calls[0][0] as string;
- const url = new URL(calledUrl);
+ const url = new URL(calledUrl, "http://localhost");
  expect(url.pathname).toBe("/api/v1/funds");
  expect(url.searchParams.get("risk_profile")).toBe("均衡");
  expect(url.searchParams.get("keyword")).toBe("510300");
@@ -68,7 +68,7 @@ describe("api client", () => {
 
  await expect(fetchFundDetail("510300", "进取")).resolves.toEqual(payload);
  const calledUrl = vi.mocked(fetch).mock.calls[0][0] as string;
- expect(calledUrl).toContain("/api/v1/funds/510300?risk_profile=进取");
+ expect(calledUrl).toBe("/api/v1/funds/510300?risk_profile=进取");
  });
 
  test("fetchFundDetail失败时抛出统一错误", async () => {
@@ -82,7 +82,7 @@ describe("api client", () => {
 
  await expect(fetchCompare(["510300", "005827"], "保守")).resolves.toEqual(payload);
  const calledUrl = vi.mocked(fetch).mock.calls[0][0] as string;
- const url = new URL(calledUrl);
+ const url = new URL(calledUrl, "http://localhost");
  expect(url.pathname).toBe("/api/v1/compare");
  expect(url.searchParams.getAll("codes")).toEqual(["510300", "005827"]);
  expect(url.searchParams.get("risk_profile")).toBe("保守");
@@ -99,7 +99,7 @@ describe("api client", () => {
 
  await expect(fetchWatchlist("均衡")).resolves.toEqual(payload);
  const calledUrl = vi.mocked(fetch).mock.calls[0][0] as string;
- expect(calledUrl).toContain("/api/v1/watchlist?risk_profile=均衡");
+ expect(calledUrl).toBe("/api/v1/watchlist?risk_profile=均衡");
  });
 
  test("fetchWatchlist失败时抛出统一错误", async () => {
@@ -112,7 +112,7 @@ describe("api client", () => {
 
  await expect(addWatchlist("510300")).resolves.toBeUndefined();
  expect(vi.mocked(fetch)).toHaveBeenCalledWith(
- "http://localhost:8000/api/v1/watchlist",
+ "/api/v1/watchlist",
  expect.objectContaining({
  method: "POST",
  headers: { "Content-Type": "application/json" },
@@ -130,7 +130,7 @@ describe("api client", () => {
  vi.mocked(fetch).mockResolvedValue(makeResponse(true, {}) as unknown as Response);
 
  await expect(removeWatchlist("510300")).resolves.toBeUndefined();
- expect(vi.mocked(fetch)).toHaveBeenCalledWith("http://localhost:8000/api/v1/watchlist/510300", {
+ expect(vi.mocked(fetch)).toHaveBeenCalledWith("/api/v1/watchlist/510300", {
  method: "DELETE",
  });
  });

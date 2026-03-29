@@ -11,6 +11,15 @@ SortBy = Literal["final_score", "base_score", "policy_score", "one_year_return",
 SortOrder = Literal["asc", "desc"]
 
 
+class Explanation(BaseModel):
+    plus: list[str]
+    minus: list[str]
+    risk_tip: str
+    applicable: str
+    disclaimer: str
+    formula: str
+
+
 class FactorMetrics(BaseModel):
     returns: float = Field(ge=0, le=100)
     risk_control: float = Field(ge=0, le=100)
@@ -34,10 +43,14 @@ class Fund(BaseModel):
     category: str
     fund_type: FundType
     years: float
+    scale_billion: float = Field(ge=0)
     fee: float
     risk_level: str
     one_year_return: float
     max_drawdown: float
+    tracking_error: float | None = Field(default=None, ge=0)
+    liquidity_label: str
+    updated_at: str
     factors: FactorMetrics
     policy: PolicyMetrics
 
@@ -45,11 +58,15 @@ class Fund(BaseModel):
 class FundScore(BaseModel):
     code: str
     name: str
+    channel: Channel
+    category: str
+    risk_level: str
+    liquidity_label: str
     final_score: float
     base_score: float
     policy_score: float
     overlay_weight: float
-    explanation: dict[str, list[str] | str]
+    explanation: Explanation
 
 
 class FundsListResponse(BaseModel):
@@ -63,9 +80,16 @@ class FundDetail(FundScore):
     risk_level: str
     channel: Channel
     category: str
+    years: float
+    scale_billion: float
     one_year_return: float
     max_drawdown: float
     fee: float
+    tracking_error: float | None = None
+    liquidity_label: str
+    updated_at: str
+    factors: FactorMetrics
+    policy: PolicyMetrics
 
 
 class WatchlistScore(FundScore):

@@ -1,6 +1,6 @@
 import { FundDetail, FundQuery, FundsListResponse, FundScore, RiskProfile, WatchlistScore } from "./types";
 
-const API_BASE = "http://localhost:8000/api/v1";
+const API_BASE = import.meta.env.VITE_API_BASE ?? "/api/v1";
 
 function toQuery(params: Record<string, string | number | undefined>): string {
  const qs = new URLSearchParams();
@@ -14,7 +14,10 @@ export async function fetchFunds(query: FundQuery): Promise<FundsListResponse> {
  const qs = toQuery({
  channel: query.channel,
  category: query.category,
+ risk_level: query.risk_level,
  min_years: query.min_years,
+ min_scale: query.min_scale,
+ max_scale: query.max_scale,
  max_fee: query.max_fee,
  keyword: query.keyword,
  risk_profile: query.risk_profile,

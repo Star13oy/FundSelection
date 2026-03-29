@@ -18,6 +18,10 @@ function makeFund(code: string, score =88): FundScore {
  return {
  code,
  name: `基金${code}`,
+ channel: code === "005827" ? "场外" : "场内",
+ category: code === "005827" ? "混合" : "宽基",
+ risk_level: code === "512480" ? "R5" : "R4",
+ liquidity_label: code === "005827" ? "申赎为主" : "高流动性",
  final_score: score,
  base_score:80,
  policy_score:85,
@@ -26,6 +30,8 @@ function makeFund(code: string, score =88): FundScore {
  plus: ["政策支持"],
  minus: ["波动较高"],
  risk_tip: "注意回撤",
+ applicable: "适合中长期持有",
+ disclaimer: "仅供参考，不构成投资建议。",
  formula: "Final = Base*(1-overlay)+Policy*overlay",
  },
  };
@@ -37,9 +43,28 @@ function makeDetail(code: string): FundDetail {
  risk_level: "中",
  channel: "场内",
  category: "宽基",
+ years: 6,
+ scale_billion: 120,
  one_year_return:12.3,
  max_drawdown:18.5,
  fee:0.5,
+ tracking_error: 0.2,
+ liquidity_label: "高流动性",
+ updated_at: "2026-03-28",
+ factors: {
+ returns: 80,
+ risk_control: 82,
+ risk_adjusted: 79,
+ stability: 78,
+ cost_efficiency: 88,
+ liquidity: 90,
+ survival_quality: 85,
+ },
+ policy: {
+ support: 84,
+ execution: 82,
+ regulation_safety: 80,
+ },
  };
 }
 
@@ -241,5 +266,165 @@ describe("App interactions", () => {
  fireEvent.click(toCompare);
 
  expect(screen.getByRole("heading", { level:2, name: "基金对比页（2-5只）" })).toBeInTheDocument();
+ });
+
+ test("详情页支持切换表现、因子、成本与解释标签", async () => {
+ render(<App />);
+ fireEvent.click(screen.getByRole("button", { name: "选基" }));
+
+ const detailButtons = await screen.findAllByRole("button", { name: "查看详情" });
+ fireEvent.click(detailButtons[0]);
+
+ await screen.findByRole("heading", { level:2, name: "基金详情页" });
+ fireEvent.click(screen.getByRole("button", { name: "因子分析" }));
+ expect(screen.getByText("政策支持强度")).toBeInTheDocument();
+
+ fireEvent.click(screen.getByRole("button", { name: "成本与交易" }));
+ expect(screen.getByText(/流动性标签：高流动性/)).toBeInTheDocument();
+
+ fireEvent.click(screen.getByRole("button", { name: "解释" }));
+ expect(screen.getAllByText("仅供参考，不构成投资建议。").length).toBeGreaterThan(0);
+ });
+
+ test("筛选扩展项与重置按钮会更新请求参数", async () => {
+ render(<App />);
+ fireEvent.click(screen.getByRole("button", { name: "选基" }));
+
+ await waitFor(() => expect(mockedApi.fetchFunds).toHaveBeenCalledTimes(1));
+
+ fireEvent.change(screen.getByLabelText("场内/场外"), { target: { value: "场内" } });
+ fireEvent.change(screen.getByLabelText("风险等级"), { target: { value: "R4" } });
+ fireEvent.change(screen.getByLabelText("最低规模（亿元）"), { target: { value: "50" } });
+ fireEvent.change(screen.getByLabelText("最高规模（亿元）"), { target: { value: "300" } });
+
+ await waitFor(() => expect(mockedApi.fetchFunds).toHaveBeenCalledTimes(5));
+ expect(mockedApi.fetchFunds).toHaveBeenLastCalledWith(
+  expect.objectContaining({
+   channel: "场内",
+   risk_level: "R4",
+   min_scale: 50,
+   max_scale: 300,
+  }),
+ );
+
+ fireEvent.click(screen.getByRole("button", { name: "重置筛选" }));
+ await waitFor(() => expect(mockedApi.fetchFunds).toHaveBeenCalledTimes(6));
+ expect(mockedApi.fetchFunds).toHaveBeenLastCalledWith(
+  expect.objectContaining({
+   channel: undefined,
+   risk_level: "",
+   min_scale: undefined,
+   max_scale: undefined,
+  }),
+ );
+ });
+
+ test("导出结果会创建下载链接", async () => {
+ Object.defineProperty(URL, "createObjectURL", {
+  writable: true,
+  value: vi.fn(() => "blob:test"),
+ });
+ Object.defineProperty(URL, "revokeObjectURL", {
+  writable: true,
+  value: vi.fn(),
+ });
+ const click = vi.fn();
+ const originalCreateElement = document.createElement.bind(document);
+ vi.spyOn(document, "createElement").mockImplementation(((tagName: string) => {
+  if (tagName === "a") {
+   return { click, href: "", download: "" } as unknown as HTMLAnchorElement;
+  }
+  return originalCreateElement(tagName);
+ }) as typeof document.createElement);
+
+ render(<App />);
+ fireEvent.click(screen.getByRole("button", { name: "选基" }));
+ await screen.findByRole("button", { name: "导出结果" });
+ fireEvent.click(screen.getByRole("button", { name: "导出结果" }));
+
+ expect(URL.createObjectURL).toHaveBeenCalled();
+ expect(click).toHaveBeenCalled();
+ expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:test");
+ });
+
+ test("观察池条目可查看详情和加入对比", async () => {
+ mockedApi.fetchWatchlist.mockResolvedValue([
+  { ...makeFund("510300"), alerts: ["提醒"] },
+ ] as WatchlistScore[]);
+
+ render(<App />);
+ fireEvent.click(screen.getByRole("button", { name: "观察池" }));
+
+ const detailButton = await screen.findByRole("button", { name: "查看详情" });
+ fireEvent.click(detailButton);
+ await screen.findByRole("heading", { level:2, name: "基金详情页" });
+
+ fireEvent.click(screen.getByRole("button", { name: "观察池" }));
+ const compareButton = await screen.findByRole("button", { name: "加入对比" });
+ fireEvent.click(compareButton);
+ expect(await screen.findByRole("button", { name: "取消对比" })).toBeInTheDocument();
+ });
+
+ test("观察池自动对比会展示结论摘要卡片", async () => {
+ mockedApi.fetchWatchlist.mockResolvedValue([
+  { ...makeFund("510300", 91), alerts: ["提醒"] },
+  { ...makeFund("005827", 87), alerts: ["提醒"] },
+ ] as WatchlistScore[]);
+
+ render(<App />);
+ fireEvent.click(screen.getByRole("button", { name: "对比" }));
+
+ await waitFor(() => expect(mockedApi.fetchCompare).toHaveBeenCalled());
+ expect(screen.getByText("结论摘要卡片")).toBeInTheDocument();
+ expect(screen.getByText(/更稳健：/)).toBeInTheDocument();
+ expect(screen.getByText(/成本与流动性对比/)).toBeInTheDocument();
+ });
+
+ test("首页空结果时也会展示空态", async () => {
+ mockedApi.fetchFunds.mockResolvedValueOnce({ items: [], total:0, page:1, page_size:20 });
+ render(<App />);
+
+ await waitFor(() => expect(mockedApi.fetchFunds).toHaveBeenCalled());
+ expect(screen.getByText("暂无推荐结果")).toBeInTheDocument();
+ });
+
+ test("首页和选基页展示风险等级与类型信息", async () => {
+ render(<App />);
+
+ await waitFor(() => expect(mockedApi.fetchFunds).toHaveBeenCalled());
+ expect(screen.getByText("高流动性场内基金：2")).toBeInTheDocument();
+ expect(screen.getByText("当前Top1代码：510300")).toBeInTheDocument();
+
+ fireEvent.click(screen.getByRole("button", { name: "选基" }));
+ expect(await screen.findByText(/510300 · 场内 \/ 宽基/)).toBeInTheDocument();
+ expect(screen.getByText(/R4 \/ 高流动性/)).toBeInTheDocument();
+ });
+
+ test("对比页展示风险等级和图形化对照模块", async () => {
+ mockedApi.fetchWatchlist.mockResolvedValue([
+  { ...makeFund("510300", 91), alerts: ["提醒"] },
+  { ...makeFund("005827", 87), alerts: ["提醒"] },
+ ] as WatchlistScore[]);
+
+ render(<App />);
+ fireEvent.click(screen.getByRole("button", { name: "对比" }));
+
+ await waitFor(() => expect(mockedApi.fetchCompare).toHaveBeenCalled());
+ expect(screen.getByText("收益 / 回撤对照")).toBeInTheDocument();
+ expect(screen.getByText("因子雷达图（分项条）")).toBeInTheDocument();
+ expect(screen.getAllByText("R4").length).toBeGreaterThan(0);
+ });
+
+ test("加入观察池失败时展示错误提示", async () => {
+ mockedApi.addWatchlist.mockRejectedValueOnce(new Error("加入观察池失败"));
+ render(<App />);
+ fireEvent.click(screen.getByRole("button", { name: "选基" }));
+
+ const watchButtons = await screen.findAllByRole("button", { name: "加入观察池" });
+ fireEvent.click(watchButtons[0]);
+
+ await waitFor(() => {
+  expect(screen.getByText("错误：加入观察池失败")).toBeInTheDocument();
+ });
  });
 });

@@ -6,21 +6,62 @@ def setup_function() -> None:
 
 
 def test_filter_by_channel_and_category() -> None:
-    funds = filter_funds(channel="场内", category="行业", min_years=None, max_fee=None, keyword=None)
+    funds = filter_funds(
+        channel="场内",
+        category="行业",
+        risk_level=None,
+        min_years=None,
+        min_scale=None,
+        max_scale=None,
+        max_fee=None,
+        keyword=None,
+    )
     assert len(funds) == 1
     assert funds[0].code == "512480"
 
 
 def test_filter_by_numeric_constraints() -> None:
-    funds = filter_funds(channel=None, category=None, min_years=10, max_fee=0.7, keyword=None)
+    funds = filter_funds(
+        channel=None,
+        category=None,
+        risk_level=None,
+        min_years=10,
+        min_scale=90,
+        max_scale=None,
+        max_fee=0.7,
+        keyword=None,
+    )
     codes = {f.code for f in funds}
     assert "510300" in codes
     assert "000012" in codes
 
 
 def test_filter_by_keyword() -> None:
-    funds = filter_funds(channel=None, category=None, min_years=None, max_fee=None, keyword="蓝筹")
+    funds = filter_funds(
+        channel=None,
+        category=None,
+        risk_level=None,
+        min_years=None,
+        min_scale=None,
+        max_scale=None,
+        max_fee=None,
+        keyword="蓝筹",
+    )
     assert {f.code for f in funds} == {"005827"}
+
+
+def test_filter_by_risk_level() -> None:
+    funds = filter_funds(
+        channel=None,
+        category=None,
+        risk_level="R2",
+        min_years=None,
+        min_scale=None,
+        max_scale=None,
+        max_fee=None,
+        keyword=None,
+    )
+    assert {f.code for f in funds} == {"000012"}
 
 
 def test_watchlist_crud() -> None:

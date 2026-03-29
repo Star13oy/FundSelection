@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from statistics import mean
 
-from app.models import Fund, RiskProfile
+from app.models import Explanation, Fund, RiskProfile
 
 OVERLAY_WEIGHTS = {
     "equity": {"保守": 0.10, "均衡": 0.15, "进取": 0.20},
@@ -45,7 +45,7 @@ def final_score(fund: Fund, risk_profile: RiskProfile) -> tuple[float, float, fl
     return final, b_score, p_score, o_weight
 
 
-def explain(fund: Fund, risk_profile: RiskProfile) -> dict[str, list[str] | str]:
+def explain(fund: Fund, risk_profile: RiskProfile) -> Explanation:
     _final, b_score, p_score, o_weight = final_score(fund, risk_profile)
     plus = []
     minus = []
@@ -68,16 +68,23 @@ def explain(fund: Fund, risk_profile: RiskProfile) -> dict[str, list[str] | str]
         f"当前为{fund.risk_level}，建议与“{risk_profile}”风险偏好匹配，"
         "仅作辅助决策，不构成投资建议。"
     )
+    applicable = (
+        f"适合计划持有 {max(1, round(fund.years / 3))}-{max(2, round(fund.years / 2))} 年、"
+        f"可接受 {fund.risk_level} 风险等级波动的投资者。"
+    )
+    disclaimer = "仅供参考，不构成投资建议。"
 
-    return {
-        "plus": plus[:3] or ["暂无明显优势因子"],
-        "minus": minus[:3] or ["暂无明显短板因子"],
-        "risk_tip": risk_tip,
-        "formula": (
+    return Explanation(
+        plus=plus[:3] or ["暂无明显优势因子"],
+        minus=minus[:3] or ["暂无明显短板因子"],
+        risk_tip=risk_tip,
+        applicable=applicable,
+        disclaimer=disclaimer,
+        formula=(
             f"FinalScore = BaseScore*{1 - o_weight:.2f} + PolicyScore*{o_weight:.2f}; "
             f"当前 BaseScore={b_score}, PolicyScore={p_score}"
         ),
-    }
+    )
 
 
 def watchlist_alerts(fund: Fund, risk_profile: RiskProfile) -> list[str]:
