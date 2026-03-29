@@ -26,6 +26,24 @@ export type PolicyMetrics = {
  regulation_safety: number;
 };
 
+export type MarketSnapshot = {
+ current_price: number | null;
+ previous_close: number | null;
+ intraday_high: number | null;
+ intraday_low: number | null;
+ open_price: number | null;
+ price_change_pct: number | null;
+ price_change_value: number | null;
+ nav: number | null;
+ nav_date: string | null;
+ nav_estimate: number | null;
+ nav_estimate_change_pct: number | null;
+ volume: number | null;
+ turnover: number | null;
+ quote_time: string | null;
+ source: string | null;
+};
+
 export type FundScore = {
  code: string;
  name: string;
@@ -38,6 +56,7 @@ export type FundScore = {
  policy_score: number;
  overlay_weight: number;
  explanation: Explanation;
+ market?: MarketSnapshot | null;
 };
 
 export type FundDetail = FundScore & {
@@ -81,4 +100,12 @@ export type FundQuery = {
  sort_order?: "asc" | "desc";
  page?: number;
  page_size?: number;
+};
+
+export type MarketRefreshResponse = {
+ status: string;
+ updated_codes: string[];
+ failed_codes: Record<string, string>;
+ updated_count: number;
+ failed_count: number;
 };

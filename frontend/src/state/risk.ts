@@ -1,4 +1,4 @@
-import { RiskProfile } from "../types";
+import type { RiskProfile } from "../types.ts";
 
 export function nextRiskProfile(current: RiskProfile): RiskProfile {
   if (current === "保守") return "均衡";

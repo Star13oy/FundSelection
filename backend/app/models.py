@@ -36,6 +36,24 @@ class PolicyMetrics(BaseModel):
     regulation_safety: float = Field(ge=0, le=100)
 
 
+class MarketSnapshot(BaseModel):
+    current_price: float | None = None
+    previous_close: float | None = None
+    intraday_high: float | None = None
+    intraday_low: float | None = None
+    open_price: float | None = None
+    price_change_pct: float | None = None
+    price_change_value: float | None = None
+    nav: float | None = None
+    nav_date: str | None = None
+    nav_estimate: float | None = None
+    nav_estimate_change_pct: float | None = None
+    volume: float | None = None
+    turnover: float | None = None
+    quote_time: str | None = None
+    source: str | None = None
+
+
 class Fund(BaseModel):
     code: str
     name: str
@@ -67,6 +85,7 @@ class FundScore(BaseModel):
     policy_score: float
     overlay_weight: float
     explanation: Explanation
+    market: MarketSnapshot | None = None
 
 
 class FundsListResponse(BaseModel):

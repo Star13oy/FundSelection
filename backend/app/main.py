@@ -11,6 +11,7 @@ from app.models import (
     Fund,
     FundsListResponse,
     FundScore,
+    MarketSnapshot,
     PolicyTimestampCheckRequest,
     PolicyTimestampCheckResponse,
     RiskProfile,
@@ -21,13 +22,27 @@ from app.models import (
 )
 from app.policy_validation import validate_policy_timestamps
 from app.scoring import explain, final_score, watchlist_alerts
-from app.store import add_watchlist, filter_funds, get_fund, list_watchlist, remove_watchlist
+from app.store import (
+    add_watchlist,
+    filter_funds,
+    get_fund,
+    get_market_snapshot,
+    get_market_snapshots,
+    init_store,
+    list_watchlist,
+    refresh_market_quotes_if_stale,
+    refresh_market_quotes,
+    remove_watchlist,
+    sync_fund_universe,
+)
 
 app = FastAPI(
     title="Fund Quant Backend",
     version="0.2.0",
     description="A股基金量化选基 MVP 后端接口。",
 )
+
+init_store()
 
 app.add_middleware(
     CORSMiddleware,
@@ -57,7 +72,7 @@ def _sort_key(
     return float(getattr(item, sort_by))
 
 
-def _build_fund_score(fund: Fund, risk_profile: RiskProfile) -> FundScore:
+def _build_fund_score(fund: Fund, risk_profile: RiskProfile, market: MarketSnapshot | None = None) -> FundScore:
     final, base, policy, overlay = final_score(fund, risk_profile)
     return FundScore(
         code=fund.code,
@@ -71,11 +86,12 @@ def _build_fund_score(fund: Fund, risk_profile: RiskProfile) -> FundScore:
         policy_score=policy,
         overlay_weight=overlay,
         explanation=explain(fund, risk_profile),
+        market=market,
     )
 
 
 def _build_fund_detail(fund: Fund, risk_profile: RiskProfile) -> FundDetail:
-    score = _build_fund_score(fund, risk_profile)
+    score = _build_fund_score(fund, risk_profile, get_market_snapshot(fund.code))
     return FundDetail(
         **score.model_dump(),
         years=fund.years,
@@ -91,7 +107,7 @@ def _build_fund_detail(fund: Fund, risk_profile: RiskProfile) -> FundDetail:
 
 
 def _build_watchlist_score(fund: Fund, risk_profile: RiskProfile) -> WatchlistScore:
-    score = _build_fund_score(fund, risk_profile)
+    score = _build_fund_score(fund, risk_profile, get_market_snapshot(fund.code))
     return WatchlistScore(
         **score.model_dump(),
         alerts=watchlist_alerts(fund, risk_profile),
@@ -126,11 +142,13 @@ def list_funds(
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=100),
 ) -> FundsListResponse:
+    refresh_market_quotes_if_stale(max_age_minutes=15)
     funds = filter_funds(channel, category, risk_level, min_years, min_scale, max_scale, max_fee, keyword)
+    market_map = get_market_snapshots([fund.code for fund in funds])
 
     scored_with_fields: list[tuple[FundScore, float, float, float]] = []
     for fund in funds:
-        score = _build_fund_score(fund, risk_profile)
+        score = _build_fund_score(fund, risk_profile, market_map.get(fund.code))
         scored_with_fields.append(
             (
                 score,
@@ -167,7 +185,8 @@ def compare_funds(
     if not (2 <= len(codes) <= 5):
         raise HTTPException(status_code=400, detail="codes size must be 2~5")
 
-    results = [_build_fund_score(_require_fund(code), risk_profile) for code in codes]
+    market_map = get_market_snapshots(codes)
+    results = [_build_fund_score(_require_fund(code), risk_profile, market_map.get(code)) for code in codes]
     results.sort(key=lambda x: x.final_score, reverse=True)
     return results
 
@@ -192,6 +211,18 @@ def create_watchlist(payload: WatchlistItem) -> dict[str, str]:
 def delete_watchlist(code: str) -> dict[str, str]:
     remove_watchlist(code)
     return {"status": "ok", "code": code}
+
+
+@app.post("/api/v1/market/refresh")
+def refresh_market() -> dict[str, object]:
+    summary = refresh_market_quotes()
+    return {"status": "ok", **summary}
+
+
+@app.post("/api/v1/funds/sync")
+def sync_funds() -> dict[str, object]:
+    summary = sync_fund_universe()
+    return {"status": "ok", **summary}
 
 
 @app.post("/api/v1/policy/validate-timestamps", response_model=PolicyTimestampCheckResponse)

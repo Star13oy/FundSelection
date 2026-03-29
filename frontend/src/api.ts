@@ -1,6 +1,26 @@
-import { FundDetail, FundQuery, FundsListResponse, FundScore, RiskProfile, WatchlistScore } from "./types";
+import type { FundDetail, FundQuery, FundsListResponse, FundScore, MarketRefreshResponse, RiskProfile, WatchlistScore } from "./types.ts";
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? "/api/v1";
+
+function resolveErrorMessage(resp: Response, fallback: string): string {
+ if (resp.status >= 500) return `${fallback}（后端服务异常）`;
+ if (resp.status === 404) return `${fallback}（接口不存在）`;
+ if (resp.status === 400) return `${fallback}（请求参数错误）`;
+ return fallback;
+}
+
+async function requestJson<T>(url: string, init: RequestInit | undefined, fallback: string): Promise<T> {
+ try {
+  const resp = await fetch(url, init);
+  if (!resp.ok) throw new Error(resolveErrorMessage(resp, fallback));
+  return resp.json() as Promise<T>;
+ } catch (error) {
+  if (error instanceof TypeError) {
+   throw new Error(`${fallback}（无法连接后端，请确认 8000 端口服务已启动）`);
+  }
+  throw error;
+ }
+}
 
 function toQuery(params: Record<string, string | number | undefined>): string {
  const qs = new URLSearchParams();
@@ -26,30 +46,22 @@ export async function fetchFunds(query: FundQuery): Promise<FundsListResponse> {
  page: query.page,
  page_size: query.page_size,
  });
- const resp = await fetch(`${API_BASE}/funds?${qs}`);
- if (!resp.ok) throw new Error("加载基金列表失败");
- return resp.json();
+ return requestJson<FundsListResponse>(`${API_BASE}/funds?${qs}`, undefined, "加载基金列表失败");
 }
 
 export async function fetchFundDetail(code: string, riskProfile: RiskProfile): Promise<FundDetail> {
- const resp = await fetch(`${API_BASE}/funds/${code}?risk_profile=${riskProfile}`);
- if (!resp.ok) throw new Error("加载基金详情失败");
- return resp.json();
+ return requestJson<FundDetail>(`${API_BASE}/funds/${code}?risk_profile=${riskProfile}`, undefined, "加载基金详情失败");
 }
 
 export async function fetchCompare(codes: string[], riskProfile: RiskProfile): Promise<FundScore[]> {
  const qs = new URLSearchParams();
  codes.forEach((c) => qs.append("codes", c));
  qs.set("risk_profile", riskProfile);
- const resp = await fetch(`${API_BASE}/compare?${qs.toString()}`);
- if (!resp.ok) throw new Error("加载对比数据失败");
- return resp.json();
+ return requestJson<FundScore[]>(`${API_BASE}/compare?${qs.toString()}`, undefined, "加载对比数据失败");
 }
 
 export async function fetchWatchlist(riskProfile: RiskProfile): Promise<WatchlistScore[]> {
- const resp = await fetch(`${API_BASE}/watchlist?risk_profile=${riskProfile}`);
- if (!resp.ok) throw new Error("加载观察池失败");
- return resp.json();
+ return requestJson<WatchlistScore[]>(`${API_BASE}/watchlist?risk_profile=${riskProfile}`, undefined, "加载观察池失败");
 }
 
 export async function addWatchlist(code: string): Promise<void> {
@@ -58,10 +70,14 @@ export async function addWatchlist(code: string): Promise<void> {
  headers: { "Content-Type": "application/json" },
  body: JSON.stringify({ code }),
  });
- if (!resp.ok) throw new Error("加入观察池失败");
+ if (!resp.ok) throw new Error(resolveErrorMessage(resp, "加入观察池失败"));
 }
 
 export async function removeWatchlist(code: string): Promise<void> {
  const resp = await fetch(`${API_BASE}/watchlist/${code}`, { method: "DELETE" });
- if (!resp.ok) throw new Error("移除观察池失败");
+ if (!resp.ok) throw new Error(resolveErrorMessage(resp, "移除观察池失败"));
+}
+
+export async function refreshMarket(): Promise<MarketRefreshResponse> {
+ return requestJson<MarketRefreshResponse>(`${API_BASE}/market/refresh`, { method: "POST" }, "刷新行情失败");
 }

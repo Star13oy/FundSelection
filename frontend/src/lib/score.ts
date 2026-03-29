@@ -1,4 +1,4 @@
-import { RiskProfile } from "../types";
+import type { RiskProfile } from "../types.ts";
 
 const WEIGHTS: Record<string, Record<RiskProfile, number>> = {
   equity: { 保守: 0.1, 均衡: 0.15, 进取: 0.2 },
