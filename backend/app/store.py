@@ -1,13 +1,18 @@
 from __future__ import annotations
 
+import logging
 from datetime import datetime, timedelta
 from typing import Iterable
 
+from app.config import get_factor_config
 from app.data import FUNDS
-from app.db import connect, init_db
+from app.db import connect, get_upsert_syntax, get_insert_ignore_syntax, init_db
+from app.factors.errors import InsufficientDataError, NAVDataError
 from app.market_data import clear_market_context, fetch_etf_quote, fetch_otc_quote, prepare_market_context
 from app.models import FactorMetrics, Fund, MarketSnapshot, PolicyMetrics
 from app.universe import load_fund_universe
+
+logger = logging.getLogger(__name__)
 
 
 def _row_to_fund(row: dict[str, object]) -> Fund:
@@ -75,91 +80,170 @@ def init_store() -> None:
         return
 
 
-def seed_funds(force: bool = False) -> None:
+def seed_funds(force: bool = False, force_refresh: bool = False) -> dict[str, int]:
+    """Seed fund universe with REAL factor calculations.
+
+    Now:
+    1. Fetch fund list from akshare
+    2. Backfill NAV history for all funds (if using real factors)
+    3. Calculate real factors for each fund
+    4. Store to database with UPSERT
+
+    Args:
+        force: If True, reseeds even if 20k+ funds exist
+        force_refresh: If True, recalculate factors even if fund exists
+
+    Returns:
+        Statistics dict with total, success, failed, skipped counts
+    """
+    stats = {'total': 0, 'success': 0, 'failed': 0, 'skipped': 0}
+    config = get_factor_config()
+
+    # Check if reseeding is needed
     if not force:
         with connect() as conn:
             with conn.cursor() as cursor:
                 cursor.execute("SELECT COUNT(*) AS count_rows FROM funds")
                 row = cursor.fetchone() or {}
                 if int(row.get("count_rows") or 0) >= 20_000:
-                    return
+                    logger.info("Skipping seed_funds: already have 20k+ funds")
+                    return stats
 
-    universe = load_fund_universe()
-    if not universe:
-        universe = list(FUNDS)
+    try:
+        # 1. Fetch fund list from akshare
+        try:
+            import akshare as ak
+            funds_df = ak.fund_name_em()
+            stats['total'] = len(funds_df)
+            logger.info(f"Fetched {stats['total']} funds from akshare")
+        except Exception as e:
+            logger.error(f"Failed to fetch funds from akshare: {e}")
+            funds_df = None
 
+        if funds_df is None or funds_df.empty:
+            logger.warning("No funds from akshare, using fallback data")
+            universe = list(FUNDS)
+            stats['total'] = len(universe)
+        else:
+            universe = []
+            for _, row in funds_df.iterrows():
+                code = str(row.get('代码', '')).strip().zfill(6)
+                name = str(row.get('名称', '')).strip()
+                kind = str(row.get('类型', '')).strip()
+                if code.isdigit() and len(code) == 6 and name:
+                    universe.append({'代码': code, '名称': name, '类型': kind})
+
+        # 2. Backfill NAV history if using real factors
+        if config.USE_REAL_FACTORS:
+            try:
+                from app.data.nav_history import NAVHistoryManager
+                nav_manager = NAVHistoryManager()
+
+                logger.info("Starting NAV history backfill...")
+                backfill_stats = nav_manager.backfill_all_funds(max_age_days=7)
+                logger.info(f"NAV backfill complete: {backfill_stats}")
+            except Exception as e:
+                logger.warning(f"NAV backfill failed: {e}")
+                logger.warning("Will use legacy calculations for funds without NAV data")
+
+        # 3. Calculate factors for each fund
+        logger.info(f"Starting factor calculations for {stats['total']} funds")
+        if config.USE_REAL_FACTORS:
+            # Assume 0.5s per fund for real calculations
+            eta_seconds = stats['total'] * 0.5
+            logger.info(f"ETA: {eta_seconds / 60:.1f} minutes")
+
+        for idx, fund_data in enumerate(universe):
+            if isinstance(fund_data, dict):
+                code = fund_data.get('代码', '')
+                name = fund_data.get('名称', '')
+                kind = fund_data.get('类型', '')
+            else:
+                # It's a Fund object from FUNDS
+                code = fund_data.code
+                name = fund_data.name
+                kind = ""
+
+            # Progress logging
+            if idx > 0 and idx % 100 == 0:
+                progress = idx / stats['total'] * 100
+                logger.info(f"Progress: {idx}/{stats['total']} ({progress:.1f}%)")
+
+            try:
+                # Build fund object with REAL factors (handled in universe.py)
+                from app.universe import _build_from_ak_row
+                fund = _build_from_ak_row({'基金代码': code, '基金简称': name, '基金类型': kind})
+
+                if fund is None:
+                    stats['skipped'] += 1
+                    continue
+
+                # Store to database
+                _store_single_fund(fund)
+                stats['success'] += 1
+
+            except InsufficientDataError as e:
+                logger.warning(f"Skipping {code} ({name}): {e}")
+                stats['skipped'] += 1
+
+            except Exception as e:
+                logger.error(f"Failed to process {code} ({name}): {e}")
+                stats['failed'] += 1
+
+        logger.info(
+            f"Seed complete: {stats['success']} succeeded, "
+            f"{stats['failed']} failed, {stats['skipped']} skipped"
+        )
+        return stats
+
+    except Exception as e:
+        logger.error(f"seed_funds failed: {e}")
+        raise
+
+
+def _store_single_fund(fund: Fund) -> None:
+    """Store a single fund to database."""
     with connect() as conn:
         with conn.cursor() as cursor:
-            payloads = [
-                {
-                    "code": fund.code,
-                    "name": fund.name,
-                    "channel": fund.channel,
-                    "category": fund.category,
-                    "fund_type": fund.fund_type,
-                    "years": fund.years,
-                    "scale_billion": fund.scale_billion,
-                    "fee": fund.fee,
-                    "risk_level": fund.risk_level,
-                    "one_year_return": fund.one_year_return,
-                    "max_drawdown": fund.max_drawdown,
-                    "tracking_error": fund.tracking_error,
-                    "liquidity_label": fund.liquidity_label,
-                    "updated_at": fund.updated_at,
-                    "factor_returns": fund.factors.returns,
-                    "factor_risk_control": fund.factors.risk_control,
-                    "factor_risk_adjusted": fund.factors.risk_adjusted,
-                    "factor_stability": fund.factors.stability,
-                    "factor_cost_efficiency": fund.factors.cost_efficiency,
-                    "factor_liquidity": fund.factors.liquidity,
-                    "factor_survival_quality": fund.factors.survival_quality,
-                    "policy_support": fund.policy.support,
-                    "policy_execution": fund.policy.execution,
-                    "policy_regulation_safety": fund.policy.regulation_safety,
-                }
-                for fund in universe
+            payload = {
+                "code": fund.code,
+                "name": fund.name,
+                "channel": fund.channel,
+                "category": fund.category,
+                "fund_type": fund.fund_type,
+                "years": fund.years,
+                "scale_billion": fund.scale_billion,
+                "fee": fund.fee,
+                "risk_level": fund.risk_level,
+                "one_year_return": fund.one_year_return,
+                "max_drawdown": fund.max_drawdown,
+                "tracking_error": fund.tracking_error,
+                "liquidity_label": fund.liquidity_label,
+                "updated_at": fund.updated_at,
+                "factor_returns": fund.factors.returns,
+                "factor_risk_control": fund.factors.risk_control,
+                "factor_risk_adjusted": fund.factors.risk_adjusted,
+                "factor_stability": fund.factors.stability,
+                "factor_cost_efficiency": fund.factors.cost_efficiency,
+                "factor_liquidity": fund.factors.liquidity,
+                "factor_survival_quality": fund.factors.survival_quality,
+                "policy_support": fund.policy.support,
+                "policy_execution": fund.policy.execution,
+                "policy_regulation_safety": fund.policy.regulation_safety,
+            }
+
+            # Use adapter to generate database-specific UPSERT syntax
+            columns = [
+                "code", "name", "channel", "category", "fund_type", "years", "scale_billion", "fee", "risk_level",
+                "one_year_return", "max_drawdown", "tracking_error", "liquidity_label", "updated_at",
+                "factor_returns", "factor_risk_control", "factor_risk_adjusted", "factor_stability",
+                "factor_cost_efficiency", "factor_liquidity", "factor_survival_quality",
+                "policy_support", "policy_execution", "policy_regulation_safety"
             ]
-            sql = """
-                INSERT INTO funds (
-                    code, name, channel, category, fund_type, years, scale_billion, fee, risk_level,
-                    one_year_return, max_drawdown, tracking_error, liquidity_label, updated_at,
-                    factor_returns, factor_risk_control, factor_risk_adjusted, factor_stability,
-                    factor_cost_efficiency, factor_liquidity, factor_survival_quality,
-                    policy_support, policy_execution, policy_regulation_safety
-                ) VALUES (
-                    %(code)s, %(name)s, %(channel)s, %(category)s, %(fund_type)s, %(years)s, %(scale_billion)s, %(fee)s, %(risk_level)s,
-                    %(one_year_return)s, %(max_drawdown)s, %(tracking_error)s, %(liquidity_label)s, %(updated_at)s,
-                    %(factor_returns)s, %(factor_risk_control)s, %(factor_risk_adjusted)s, %(factor_stability)s,
-                    %(factor_cost_efficiency)s, %(factor_liquidity)s, %(factor_survival_quality)s,
-                    %(policy_support)s, %(policy_execution)s, %(policy_regulation_safety)s
-                )
-                ON DUPLICATE KEY UPDATE
-                    name=VALUES(name),
-                    channel=VALUES(channel),
-                    category=VALUES(category),
-                    fund_type=VALUES(fund_type),
-                    years=VALUES(years),
-                    scale_billion=VALUES(scale_billion),
-                    fee=VALUES(fee),
-                    risk_level=VALUES(risk_level),
-                    one_year_return=VALUES(one_year_return),
-                    max_drawdown=VALUES(max_drawdown),
-                    tracking_error=VALUES(tracking_error),
-                    liquidity_label=VALUES(liquidity_label),
-                    updated_at=VALUES(updated_at),
-                    factor_returns=VALUES(factor_returns),
-                    factor_risk_control=VALUES(factor_risk_control),
-                    factor_risk_adjusted=VALUES(factor_risk_adjusted),
-                    factor_stability=VALUES(factor_stability),
-                    factor_cost_efficiency=VALUES(factor_cost_efficiency),
-                    factor_liquidity=VALUES(factor_liquidity),
-                    factor_survival_quality=VALUES(factor_survival_quality),
-                    policy_support=VALUES(policy_support),
-                    policy_execution=VALUES(policy_execution),
-                    policy_regulation_safety=VALUES(policy_regulation_safety)
-            """
-            for start in range(0, len(payloads), 500):
-                cursor.executemany(sql, payloads[start : start + 500])
+            update_columns = columns[1:]  # All columns except the primary key (code)
+            sql = get_upsert_syntax("funds", columns, update_columns)
+
+            cursor.execute(sql, payload)
 
 
 def sync_fund_universe() -> dict[str, int]:
@@ -192,35 +276,15 @@ def refresh_market_quotes() -> dict[str, object]:
 
         with connect() as conn:
             with conn.cursor() as cursor:
-                sql = """
-                    INSERT INTO market_quotes (
-                        fund_code, current_price, previous_close, intraday_high, intraday_low, open_price,
-                        price_change_pct, price_change_value, nav, nav_date, nav_estimate, nav_estimate_change_pct,
-                        volume, turnover, quote_time, source, raw_payload
-                    ) VALUES (
-                        %(fund_code)s, %(current_price)s, %(previous_close)s, %(intraday_high)s, %(intraday_low)s, %(open_price)s,
-                        %(price_change_pct)s, %(price_change_value)s, %(nav)s, %(nav_date)s, %(nav_estimate)s, %(nav_estimate_change_pct)s,
-                        %(volume)s, %(turnover)s, %(quote_time)s, %(source)s, %(raw_payload)s
-                    )
-                    ON DUPLICATE KEY UPDATE
-                        current_price=VALUES(current_price),
-                        previous_close=VALUES(previous_close),
-                        intraday_high=VALUES(intraday_high),
-                        intraday_low=VALUES(intraday_low),
-                        open_price=VALUES(open_price),
-                        price_change_pct=VALUES(price_change_pct),
-                        price_change_value=VALUES(price_change_value),
-                        nav=VALUES(nav),
-                        nav_date=VALUES(nav_date),
-                        nav_estimate=VALUES(nav_estimate),
-                        nav_estimate_change_pct=VALUES(nav_estimate_change_pct),
-                        volume=VALUES(volume),
-                        turnover=VALUES(turnover),
-                        quote_time=VALUES(quote_time),
-                        fetched_at=CURRENT_TIMESTAMP,
-                        source=VALUES(source),
-                        raw_payload=VALUES(raw_payload)
-                """
+                # Use adapter to generate database-specific UPSERT syntax
+                columns = [
+                    "fund_code", "current_price", "previous_close", "intraday_high", "intraday_low", "open_price",
+                    "price_change_pct", "price_change_value", "nav", "nav_date", "nav_estimate", "nav_estimate_change_pct",
+                    "volume", "turnover", "quote_time", "source", "raw_payload"
+                ]
+                update_columns = columns[1:]  # All columns except primary key (fund_code)
+                sql = get_upsert_syntax("market_quotes", columns, update_columns)
+
                 for start in range(0, len(payloads), 500):
                     cursor.executemany(sql, payloads[start : start + 500])
     finally:
@@ -328,7 +392,8 @@ def add_watchlist(code: str) -> bool:
         return False
     with connect() as conn:
         with conn.cursor() as cursor:
-            cursor.execute("INSERT IGNORE INTO watchlist (code) VALUES (%s)", (code,))
+            sql = get_insert_ignore_syntax("watchlist", ["code"])
+            cursor.execute(sql, {"code": code})
     return True
 
 

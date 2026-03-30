@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from typing import Annotated
 
 from fastapi import FastAPI, HTTPException, Query
@@ -42,7 +43,10 @@ app = FastAPI(
     description="A股基金量化选基 MVP 后端接口。",
 )
 
-init_store()
+# Skip auto-initialization during testing or when explicitly disabled
+# Set SKIP_INIT=true in environment to skip database initialization
+if not os.getenv("SKIP_INIT", "").lower() in ("true", "1", "yes"):
+    init_store()
 
 app.add_middleware(
     CORSMiddleware,
