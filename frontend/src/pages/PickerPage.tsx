@@ -1,21 +1,41 @@
-import { useState } from 'react';
+type PickerFilters = {
+  channel: string;
+  category: string;
+  min_years: string;
+  max_fee: string;
+  keyword: string;
+};
 
 interface PickerPageProps {
   funds: any[];
+  total: number;
+  page: number;
+  pageSize: number;
   loading?: boolean;
-  onFilterChange: (filters: any) => void;
+  filters: PickerFilters;
+  onFilterChange: (filters: PickerFilters) => void;
+  onPageChange: (page: number) => void;
   onViewDetail: (code: string) => void;
   onAddToWatchlist: (code: string) => void;
 }
 
-export function PickerPage({ funds, loading, onFilterChange, onViewDetail, onAddToWatchlist }: PickerPageProps) {
-  const [filters, setFilters] = useState({
-    channel: '',
-    category: '',
-    min_years: '',
-    max_fee: '',
-    keyword: '',
-  });
+export function PickerPage({
+  funds,
+  total,
+  page,
+  pageSize,
+  loading,
+  filters,
+  onFilterChange,
+  onPageChange,
+  onViewDetail,
+  onAddToWatchlist,
+}: PickerPageProps) {
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+
+  function updateFilters(next: Partial<PickerFilters>) {
+    onFilterChange({ ...filters, ...next });
+  }
 
   return (
     <div className="container">
@@ -42,7 +62,7 @@ export function PickerPage({ funds, loading, onFilterChange, onViewDetail, onAdd
                 className="input"
                 placeholder="代码/简称/经理"
                 value={filters.keyword}
-                onChange={(e) => setFilters({ ...filters, keyword: e.target.value })}
+                onChange={(e) => updateFilters({ keyword: e.target.value })}
               />
             </div>
 
@@ -57,7 +77,7 @@ export function PickerPage({ funds, loading, onFilterChange, onViewDetail, onAdd
                     key={channel}
                     className={`chip ${filters.channel === channel ? 'chip-gold' : 'chip-neutral'}`}
                     style={{ border: 'none', cursor: 'pointer' }}
-                    onClick={() => setFilters({ ...filters, channel: filters.channel === channel ? '' : channel })}
+                    onClick={() => updateFilters({ channel: filters.channel === channel ? '' : channel })}
                   >
                     {channel}
                   </button>
@@ -76,7 +96,7 @@ export function PickerPage({ funds, loading, onFilterChange, onViewDetail, onAdd
                     key={category}
                     className={`chip ${filters.category === category ? 'chip-gold' : 'chip-neutral'}`}
                     style={{ border: 'none', cursor: 'pointer' }}
-                    onClick={() => setFilters({ ...filters, category: filters.category === category ? '' : category })}
+                    onClick={() => updateFilters({ category: filters.category === category ? '' : category })}
                   >
                     {category}
                   </button>
@@ -94,7 +114,7 @@ export function PickerPage({ funds, loading, onFilterChange, onViewDetail, onAdd
                 className="input"
                 placeholder="最低年限"
                 value={filters.min_years}
-                onChange={(e) => setFilters({ ...filters, min_years: e.target.value })}
+                onChange={(e) => updateFilters({ min_years: e.target.value })}
               />
             </div>
 
@@ -109,7 +129,7 @@ export function PickerPage({ funds, loading, onFilterChange, onViewDetail, onAdd
                 placeholder="最高费率"
                 step="0.01"
                 value={filters.max_fee}
-                onChange={(e) => setFilters({ ...filters, max_fee: e.target.value })}
+                onChange={(e) => updateFilters({ max_fee: e.target.value })}
               />
             </div>
 
@@ -150,7 +170,20 @@ export function PickerPage({ funds, loading, onFilterChange, onViewDetail, onAdd
               </div>
             </div>
             <div className="flex gap-sm">
-              <button className="btn btn-ghost">重置筛选</button>
+              <button
+                className="btn btn-ghost"
+                onClick={() =>
+                  onFilterChange({
+                    channel: '',
+                    category: '',
+                    min_years: '',
+                    max_fee: '',
+                    keyword: '',
+                  })
+                }
+              >
+                重置筛选
+              </button>
               <button className="btn btn-primary">导出结果</button>
             </div>
           </div>
@@ -194,10 +227,16 @@ export function PickerPage({ funds, loading, onFilterChange, onViewDetail, onAdd
                           {fund.final_score}
                         </strong>
                       </td>
-                      <td className={fund.one_year_return > 0 ? 'text-success' : 'text-error'}>
-                        {fund.one_year_return > 0 ? '+' : ''}{fund.one_year_return}%
+                      <td>
+                        <span className={fund.one_year_return >= 0 ? 'text-success' : 'text-error'} style={{ fontWeight: 700 }}>
+                          {fund.one_year_return > 0 ? '+' : ''}{fund.one_year_return.toFixed(2)}%
+                        </span>
                       </td>
-                      <td className="text-error">{fund.max_drawdown}%</td>
+                      <td>
+                        <span className={fund.max_drawdown >= 0 ? 'text-success' : 'text-error'} style={{ fontWeight: 700 }}>
+                          {fund.max_drawdown.toFixed(2)}%
+                        </span>
+                      </td>
                       <td>
                         <span className="chip chip-gold">高流动性</span>
                       </td>
@@ -216,6 +255,28 @@ export function PickerPage({ funds, loading, onFilterChange, onViewDetail, onAdd
                 </tbody>
               </table>
             )}
+          </div>
+
+          <div className="card flex items-center justify-between p-md">
+            <span style={{ fontSize: '13px', color: 'var(--color-text-secondary)' }}>
+              共 {total} 条，当前第 {page} / {totalPages} 页
+            </span>
+            <div className="flex gap-sm">
+              <button
+                className="btn btn-secondary"
+                onClick={() => onPageChange(page - 1)}
+                disabled={page <= 1 || loading}
+              >
+                上一页
+              </button>
+              <button
+                className="btn btn-secondary"
+                onClick={() => onPageChange(page + 1)}
+                disabled={page >= totalPages || loading}
+              >
+                下一页
+              </button>
+            </div>
           </div>
         </div>
       </div>

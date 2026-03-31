@@ -12,6 +12,16 @@
 - ✅ **完整测试**: 100+ 单元测试，覆盖所有核心功能
 - ✅ **专业文档**: 完整的开发、部署、API文档
 
+
+## 🆕 最近修复记录（2026-03-31）
+
+- ✅ **详情页 500 修复**：统一详情接口的 `FundDetail` 组装逻辑，解决点击“详情”时报错的问题。
+- ✅ **选基页分页接入**：`选基` 页面改为真实分页请求，支持页码切换与总量反馈。
+- ✅ **列表字段补齐**：基金列表和选基结果补充 `fund_type`、`scale_billion`、`one_year_return`、`max_drawdown`。
+- ✅ **行情体验优化**：市场刷新改为后台异步执行，风险偏好切换增加前后端缓存，减少等待时间。
+- ✅ **板块热度实时化**：`/api/v1/market/sector-heat` 使用板块代表 ETF 实时映射，不再展示写死假数据。
+- ✅ **A 股颜色规则统一**：收益为红、亏损为绿；回撤数值也按同一规则展示；平盘使用中性色。
+- ✅ **固定开发端口**：前端固定 `5173`，后端固定 `8000`，避免调试过程反复跳端口。
 ## 🛠 技术栈
 
 ### 后端
@@ -129,6 +139,7 @@ npm run dev
 | [生产部署指南](docs/DEPLOYMENT.md) | 生产环境部署指南 | DevOps工程师 |
 | [迁移指南](docs/MIGRATION.md) | 系统升级和迁移指南 | 系统管理员 |
 | [系统架构文档](docs/ARCHITECTURE.md) | 技术架构和设计文档 | 架构师、高级开发者 |
+| [变更记录](docs/CHANGELOG.md) | 最近几轮功能修复与前后端联调记录 | 所有参与者 |
 
 ### 快速导航
 
@@ -137,6 +148,7 @@ npm run dev
 - **🚀 部署指南**: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)
 - **🔄 迁移指南**: [docs/MIGRATION.md](docs/MIGRATION.md)
 - **🏗️ 架构设计**: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
+- **📝 变更记录**: [docs/CHANGELOG.md](docs/CHANGELOG.md)
 
 ## 🎨 功能特性
 

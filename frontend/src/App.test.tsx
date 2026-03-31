@@ -8,6 +8,9 @@ vi.mock("./api", () => ({
  fetchFundDetail: vi.fn(),
  fetchCompare: vi.fn(),
  fetchWatchlist: vi.fn(),
+ fetchRefreshMarketStatus: vi.fn(),
+ fetchSectorHeat: vi.fn(),
+ refreshMarket: vi.fn(),
  addWatchlist: vi.fn(),
  removeWatchlist: vi.fn(),
 }));
@@ -20,12 +23,16 @@ function makeFund(code: string, score =88): FundScore {
  name: `基金${code}`,
  channel: code === "005827" ? "场外" : "场内",
  category: code === "005827" ? "混合" : "宽基",
+ fund_type: code === "005827" ? "equity" : "etf_theme",
+ scale_billion: code === "005827" ? 36.8 : 128.6,
  risk_level: code === "512480" ? "R5" : "R4",
  liquidity_label: code === "005827" ? "申赎为主" : "高流动性",
  final_score: score,
  base_score:80,
  policy_score:85,
  overlay_weight:0.15,
+ one_year_return: code === "005827" ? -3.2 : 12.3,
+ max_drawdown: code === "005827" ? 14.2 : 18.5,
  explanation: {
  plus: ["政策支持"],
  minus: ["波动较高"],
@@ -84,6 +91,9 @@ beforeEach(() => {
  mockedApi.fetchFundDetail.mockImplementation(async (code) => makeDetail(code));
  mockedApi.fetchWatchlist.mockResolvedValue([] as WatchlistScore[]);
  mockedApi.fetchCompare.mockResolvedValue([makeFund("510300"), makeFund("005827")]);
+ mockedApi.fetchRefreshMarketStatus.mockResolvedValue({ status: "completed" });
+ mockedApi.fetchSectorHeat.mockResolvedValue([]);
+ mockedApi.refreshMarket.mockResolvedValue({ status: "completed" });
  mockedApi.addWatchlist.mockResolvedValue();
  mockedApi.removeWatchlist.mockResolvedValue();
 });

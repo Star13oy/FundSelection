@@ -27,9 +27,8 @@ CREATE TABLE IF NOT EXISTS funds (
     factor_survival_quality DOUBLE NOT NULL,
     policy_support DOUBLE NOT NULL,
     policy_execution DOUBLE NOT NULL,
-    policy_regulation_safety DOUBLE NOT NULL,
-    ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-);
+    policy_regulation_safety DOUBLE NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Indexes for funds table
 CREATE INDEX idx_funds_channel ON funds(channel);
@@ -84,9 +83,8 @@ CREATE TABLE IF NOT EXISTS market_quotes (
     raw_payload JSON NULL,
     CONSTRAINT fk_market_quotes_fund
         FOREIGN KEY (fund_code) REFERENCES funds(code)
-        ON DELETE CASCADE,
-    ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-);
+        ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Indexes for market_quotes
 CREATE INDEX idx_market_quotes_fetched_at ON market_quotes(fetched_at);
@@ -105,9 +103,8 @@ CREATE TABLE IF NOT EXISTS fund_nav_history (
     CONSTRAINT fk_nav_history_fund
         FOREIGN KEY (fund_code) REFERENCES funds(code)
         ON DELETE CASCADE,
-    UNIQUE KEY uk_nav_fund_date (fund_code, date),
-    ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-);
+    UNIQUE KEY uk_nav_fund_date (fund_code, date)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Indexes for fund_nav_history
 CREATE INDEX idx_nav_history_fund_code ON fund_nav_history(fund_code);
@@ -126,9 +123,8 @@ CREATE TABLE IF NOT EXISTS market_quotes_history (
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_quotes_history_fund
         FOREIGN KEY (fund_code) REFERENCES funds(code)
-        ON DELETE CASCADE,
-    ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-);
+        ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Indexes for market_quotes_history
 CREATE INDEX idx_quotes_history_fund_code ON market_quotes_history(fund_code);
@@ -155,16 +151,14 @@ CREATE TABLE IF NOT EXISTS policy_events (
     description TEXT,
     key_points JSON,  -- JSON array of key policy points
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-);
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Indexes for policy_events
 CREATE INDEX idx_policy_events_published_at ON policy_events(published_at);
 CREATE INDEX idx_policy_events_intensity ON policy_events(intensity_level);
 CREATE INDEX idx_policy_events_status ON policy_events(execution_status);
 CREATE INDEX idx_policy_events_direction ON policy_events(impact_direction);
-CREATE INDEX idx_policy_events_sectors ON policy_events(related_sectors(255));
 
 -- Data change log table: Audit trail for all data modifications
 CREATE TABLE IF NOT EXISTS data_change_log (
@@ -174,9 +168,8 @@ CREATE TABLE IF NOT EXISTS data_change_log (
     action ENUM('INSERT', 'UPDATE', 'DELETE') NOT NULL,
     changed_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     changed_fields JSON,  -- JSON object with field names and old/new values
-    changed_by VARCHAR(64),  -- User or system identifier
-    ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-);
+    changed_by VARCHAR(64)  -- User or system identifier
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Indexes for data_change_log
 CREATE INDEX idx_change_log_table ON data_change_log(table_name);
@@ -190,9 +183,8 @@ CREATE TABLE IF NOT EXISTS watchlist (
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_watchlist_fund
         FOREIGN KEY (code) REFERENCES funds(code)
-        ON DELETE CASCADE,
-    ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-);
+        ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Index for watchlist
 CREATE INDEX idx_watchlist_created_at ON watchlist(created_at);

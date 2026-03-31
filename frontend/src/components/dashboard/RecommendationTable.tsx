@@ -36,13 +36,13 @@ export function RecommendationTable({
       <table className="table">
         <thead>
           <tr>
-            <th>基金代码/名称</th>
-            <th>类型</th>
-            <th>综合评分</th>
-            <th>风险等级</th>
-            <th>近1年收益</th>
-            <th>最大回撤</th>
-            <th>操作</th>
+            <th className="table-header-cell">基金代码 / 名称</th>
+            <th className="table-header-cell">类型标识</th>
+            <th className="table-header-cell">综合评分</th>
+            <th className="table-header-cell">风险等级</th>
+            <th className="table-header-cell">近1年收益</th>
+            <th className="table-header-cell">最大回撤</th>
+            <th className="table-header-cell">操作</th>
           </tr>
         </thead>
         <tbody>
@@ -55,7 +55,18 @@ export function RecommendationTable({
                 </div>
               </td>
               <td>
-                <span className="chip chip-neutral">{fund.category}</span>
+                <div style={{ display: 'grid', gap: '6px' }}>
+                  <span
+                    className="chip chip-neutral"
+                    style={{ justifyContent: 'center', minWidth: '78px', padding: '9px 14px', fontSize: '13px' }}
+                    title={`${formatFundType(fund.fund_type)} / ${fund.channel}`}
+                  >
+                    {formatCategoryLabel(fund.category)}
+                  </span>
+                  <span style={{ fontSize: '12px', color: 'var(--color-text-secondary)', fontWeight: 600 }}>
+                    {formatFundType(fund.fund_type)} / {fund.channel}
+                  </span>
+                </div>
               </td>
               <td>
                 <strong style={{ color: 'var(--color-primary)', fontSize: '32px', fontWeight: 800 }}>
@@ -65,11 +76,15 @@ export function RecommendationTable({
               <td>
                 <span className={`chip ${getRiskChipClass(fund.risk_level)}`}>{fund.risk_level}</span>
               </td>
-              <td className="text-muted">
-                -
+              <td>
+                <span className={fund.one_year_return >= 0 ? 'text-success' : 'text-error'} style={{ fontWeight: 700 }}>
+                  {formatSignedPercent(fund.one_year_return)}
+                </span>
               </td>
-              <td className="text-error">
-                -
+              <td>
+                <span className={fund.max_drawdown >= 0 ? 'text-success' : 'text-error'} style={{ fontWeight: 700 }}>
+                  {formatPercent(fund.max_drawdown)}
+                </span>
               </td>
               <td>
                 <div className="flex gap-sm">
@@ -103,4 +118,29 @@ function getRiskChipClass(riskLevel: string | undefined): string {
   if (level === 'R2') return 'chip-neutral';
   if (level === 'R3') return 'chip-gold';
   return 'chip-negative';
+}
+
+function formatCategoryLabel(category: string): string {
+  const normalized = category.replace("型", "");
+  if (normalized.length <= 3) return normalized;
+  if (normalized.includes("债")) return "债券";
+  if (normalized.includes("宽")) return "宽基";
+  if (normalized.includes("行")) return "行业";
+  if (normalized.includes("混")) return "混合";
+  return normalized.slice(0, 4);
+}
+
+function formatFundType(fundType: string): string {
+  if (fundType === "etf_theme") return "ETF";
+  if (fundType === "bond") return "债基";
+  if (fundType === "equity") return "主动";
+  return fundType;
+}
+
+function formatSignedPercent(value: number): string {
+  return `${value > 0 ? "+" : ""}${value.toFixed(2)}%`;
+}
+
+function formatPercent(value: number): string {
+  return `${value.toFixed(2)}%`;
 }

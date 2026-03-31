@@ -1,6 +1,7 @@
 import { MetricCard } from '../components/dashboard/MetricCard';
 import { RecommendationTable } from '../components/dashboard/RecommendationTable';
 import { RiskInsight, SectorHeat } from '../components/dashboard/RiskInsight';
+import type { SectorHeatItem } from '../types';
 
 interface HomePageProps {
   riskProfile: '保守' | '均衡' | '进取';
@@ -11,6 +12,7 @@ interface HomePageProps {
   refreshingMarket?: boolean;
   onViewDetail?: (code: string) => void;
   onAddToWatchlist?: (code: string) => void;
+  sectorHeat?: SectorHeatItem[];
 }
 
 export function HomePage({
@@ -22,6 +24,7 @@ export function HomePage({
   refreshingMarket = false,
   onViewDetail,
   onAddToWatchlist,
+  sectorHeat = [],
 }: HomePageProps) {
   const top10 = funds.slice(0, 10);
   const avgScore = top10.length > 0
@@ -158,14 +161,29 @@ export function HomePage({
           <div className="card" style={{ padding: '24px' }}>
             <h4 style={{ marginBottom: '16px' }}>板块热度分布</h4>
             <div className="grid grid-cols-2 gap-md">
-              <SectorHeat label="半导体" value="+2.45%" rise />
-              <SectorHeat label="白酒" value="-1.12%" />
-              <SectorHeat label="新能源" value="+0.32%" rise />
-              <SectorHeat label="人工智能" value="+4.18%" rise />
+              {sectorHeat.map((item) => (
+                <SectorHeat
+                  key={item.code}
+                  label={item.label}
+                  value={formatSectorValue(item.change_pct)}
+                  tone={getSectorTone(item.change_pct)}
+                  meta={item.current_price ? `ETF ${item.code} · ${item.current_price.toFixed(3)}` : `ETF ${item.code}`}
+                />
+              ))}
             </div>
           </div>
         </div>
       </div>
     </div>
   );
+}
+
+function formatSectorValue(changePct: number | null): string {
+  if (changePct === null || Number.isNaN(changePct)) return '暂无行情';
+  return `${changePct > 0 ? '+' : ''}${changePct.toFixed(2)}%`;
+}
+
+function getSectorTone(changePct: number | null): 'rise' | 'fall' | 'flat' {
+  if (changePct === null || Number.isNaN(changePct) || changePct === 0) return 'flat';
+  return changePct > 0 ? 'rise' : 'fall';
 }

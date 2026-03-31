@@ -69,26 +69,42 @@ export function RiskInsight({ metrics = [], callout, extraContent }: RiskInsight
 interface SectorHeatProps {
   label: string;
   value: string;
-  rise?: boolean;
+  tone?: 'rise' | 'fall' | 'flat';
+  meta?: string;
 }
 
-export function SectorHeat({ label, value, rise }: SectorHeatProps) {
+export function SectorHeat({ label, value, tone = 'flat', meta }: SectorHeatProps) {
+  const backgroundColor =
+    tone === 'rise' ? '#FFEFED' :
+    tone === 'fall' ? '#EEF8F2' :
+    '#F5F3F3';
+
+  const textClass =
+    tone === 'rise' ? 'text-success' :
+    tone === 'fall' ? 'text-error' :
+    'text-secondary';
+
   return (
     <div
       className="card p-md"
       style={{
-        backgroundColor: rise ? '#FFEFED' : '#EEF8F2',
+        backgroundColor,
         borderRadius: 'var(--radius-md)',
         padding: '12px',
       }}
     >
       <span className="label-sm" style={{ display: 'block', marginBottom: '6px' }}>{label}</span>
       <strong
-        className={rise ? 'text-success' : 'text-error'}
+        className={textClass}
         style={{ display: 'block', marginTop: '6px', fontSize: '16px' }}
       >
         {value}
       </strong>
+      {meta && (
+        <span style={{ display: 'block', marginTop: '6px', fontSize: '12px', color: 'var(--color-text-secondary)' }}>
+          {meta}
+        </span>
+      )}
     </div>
   );
 }

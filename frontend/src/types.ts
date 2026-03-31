@@ -45,18 +45,22 @@ export type MarketSnapshot = {
 };
 
 export type FundScore = {
- code: string;
- name: string;
- channel: Channel;
- category: string;
- risk_level: string;
- liquidity_label: string;
- final_score: number;
- base_score: number;
- policy_score: number;
- overlay_weight: number;
- explanation: Explanation;
- market?: MarketSnapshot | null;
+  code: string;
+  name: string;
+  channel: Channel;
+  category: string;
+  fund_type: string;
+  scale_billion: number;
+  risk_level: string;
+  liquidity_label: string;
+  final_score: number;
+  base_score: number;
+  policy_score: number;
+  overlay_weight: number;
+  one_year_return: number;
+  max_drawdown: number;
+  explanation: Explanation;
+  market?: MarketSnapshot | null;
 };
 
 export type FundDetail = FundScore & {
@@ -103,9 +107,23 @@ export type FundQuery = {
 };
 
 export type MarketRefreshResponse = {
- status: string;
- updated_codes: string[];
- failed_codes: Record<string, string>;
- updated_count: number;
- failed_count: number;
+  status: string;
+  running?: boolean;
+  updated_codes?: string[];
+  failed_codes?: Record<string, string>;
+  updated_count?: number;
+  failed_count?: number;
+  skipped_count?: number;
+  last_started_at?: string | null;
+  last_finished_at?: string | null;
+  error?: string | null;
+};
+
+export type SectorHeatItem = {
+  label: string;
+  code: string;
+  change_pct: number | null;
+  current_price: number | null;
+  quote_time: string | null;
+  source: string | null;
 };

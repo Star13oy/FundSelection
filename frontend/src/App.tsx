@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { TopNavigation, Brand, Navigation } from './components/layout/Header';
 import { HomePage } from './pages/HomePage';
 import { PickerPage } from './pages/PickerPage';
@@ -8,35 +8,73 @@ import { WatchlistPage } from './pages/WatchlistPage';
 import {
   addWatchlist,
   fetchFunds,
+  fetchRefreshMarketStatus,
+  fetchSectorHeat,
   fetchWatchlist,
   fetchFundDetail,
   refreshMarket,
   removeWatchlist,
 } from './api';
-import type { FundScore, RiskProfile, FundDetail } from './types';
+import type { FundScore, RiskProfile, FundDetail, SectorHeatItem } from './types';
 
 type Page = '首页' | '选基' | '详情' | '对比' | '观察池';
+type PickerFilters = {
+  channel: string;
+  category: string;
+  min_years: string;
+  max_fee: string;
+  keyword: string;
+};
 
 export function App() {
+  const riskProfiles: RiskProfile[] = ['保守', '均衡', '进取'];
   const [page, setPage] = useState<Page>('首页');
   const [risk, setRisk] = useState<RiskProfile>('均衡');
   const [funds, setFunds] = useState<FundScore[]>([]);
   const [loading, setLoading] = useState(false);
   const [refreshingMarket, setRefreshingMarket] = useState(false);
   const [watchlist, setWatchlist] = useState<FundScore[]>([]);
+  const [fundsCache, setFundsCache] = useState<Partial<Record<RiskProfile, FundScore[]>>>({});
+  const [watchlistCache, setWatchlistCache] = useState<Partial<Record<RiskProfile, FundScore[]>>>({});
+  const [sectorHeat, setSectorHeat] = useState<SectorHeatItem[]>([]);
+  const [pickerFunds, setPickerFunds] = useState<FundScore[]>([]);
+  const [pickerLoading, setPickerLoading] = useState(false);
+  const [pickerPage, setPickerPage] = useState(1);
+  const [pickerPageSize] = useState(20);
+  const [pickerTotal, setPickerTotal] = useState(0);
+  const [pickerFilters, setPickerFilters] = useState<PickerFilters>({
+    channel: '',
+    category: '',
+    min_years: '',
+    max_fee: '',
+    keyword: '',
+  });
   const [detailCode, setDetailCode] = useState<string | null>(null);
   const [detailData, setDetailData] = useState<FundDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [error, setError] = useState('');
+  const riskRef = useRef<RiskProfile>(risk);
+
+  useEffect(() => {
+    riskRef.current = risk;
+  }, [risk]);
 
   // Load funds on mount and when risk profile changes
   useEffect(() => {
-    loadFunds();
+    if (fundsCache[risk]) {
+      setFunds(fundsCache[risk] ?? []);
+      return;
+    }
+    void loadFunds(risk, { apply: true });
   }, [risk]);
 
   // Load watchlist
   useEffect(() => {
-    loadWatchlist();
+    if (watchlistCache[risk]) {
+      setWatchlist(watchlistCache[risk] ?? []);
+      return;
+    }
+    void loadWatchlist(risk, { apply: true });
   }, [risk]);
 
   // Load detail when detailCode changes
@@ -46,31 +84,80 @@ export function App() {
     }
   }, [detailCode, page, risk]);
 
-  async function loadFunds() {
-    setLoading(true);
-    setError('');
+  useEffect(() => {
+    if (page === '选基') {
+      void loadPickerFunds();
+    }
+  }, [page, risk, pickerPage, pickerFilters]);
+
+  useEffect(() => {
+    void loadSectorHeat();
+  }, []);
+
+  useEffect(() => {
+    riskProfiles
+      .filter((profile) => profile !== risk)
+      .forEach((profile) => {
+        if (!fundsCache[profile]) {
+          void loadFunds(profile, { apply: false });
+        }
+        if (!watchlistCache[profile]) {
+          void loadWatchlist(profile, { apply: false });
+        }
+      });
+  }, [risk, fundsCache, watchlistCache]);
+
+  async function loadFunds(targetRisk: RiskProfile = risk, options: { apply: boolean; force?: boolean } = { apply: true }) {
+    if (!options.force && fundsCache[targetRisk]) {
+      if (options.apply) {
+        setFunds(fundsCache[targetRisk] ?? []);
+      }
+      return;
+    }
+    if (options.apply) {
+      setLoading(true);
+      setError('');
+    }
     try {
       const data = await fetchFunds({
-        risk_profile: risk,
+        risk_profile: targetRisk,
         page: 1,
-        page_size: 50,
+        page_size: 20,
         sort_by: 'final_score',
         sort_order: 'desc',
       });
-      setFunds(data.items);
+      setFundsCache((prev) => ({ ...prev, [targetRisk]: data.items }));
+      if (options.apply && riskRef.current === targetRisk) {
+        setFunds(data.items);
+      }
     } catch (e: unknown) {
-      setError((e as Error).message);
+      if (options.apply) {
+        setError((e as Error).message);
+      }
     } finally {
-      setLoading(false);
+      if (options.apply) {
+        setLoading(false);
+      }
     }
   }
 
-  async function loadWatchlist() {
+  async function loadWatchlist(targetRisk: RiskProfile = risk, options: { apply: boolean; force?: boolean } = { apply: true }) {
+    if (!options.force && watchlistCache[targetRisk]) {
+      if (options.apply) {
+        setWatchlist(watchlistCache[targetRisk] ?? []);
+      }
+      return;
+    }
     try {
-      const data = await fetchWatchlist(risk);
-      setWatchlist(data);
+      const data = await fetchWatchlist(targetRisk);
+      setWatchlistCache((prev) => ({ ...prev, [targetRisk]: data }));
+      if (options.apply && riskRef.current === targetRisk) {
+        setWatchlist(data);
+      }
     } catch (e: unknown) {
-      console.error('Failed to load watchlist:', e);
+      if (options.apply) {
+        console.error('Failed to load watchlist:', e);
+      }
     }
   }
 
@@ -87,16 +174,87 @@ export function App() {
     }
   }
 
+  async function loadSectorHeat() {
+    try {
+      const data = await fetchSectorHeat();
+      setSectorHeat(data);
+    } catch (e: unknown) {
+      console.error('Failed to load sector heat:', e);
+    }
+  }
+
+  async function loadPickerFunds() {
+    setPickerLoading(true);
+    setError('');
+    try {
+      const data = await fetchFunds({
+        risk_profile: risk,
+        page: pickerPage,
+        page_size: pickerPageSize,
+        channel: pickerFilters.channel === '场内' || pickerFilters.channel === '场外'
+          ? pickerFilters.channel
+          : undefined,
+        category: pickerFilters.category || undefined,
+        min_years: pickerFilters.min_years ? Number(pickerFilters.min_years) : undefined,
+        max_fee: pickerFilters.max_fee ? Number(pickerFilters.max_fee) : undefined,
+        keyword: pickerFilters.keyword || undefined,
+        sort_by: 'final_score',
+        sort_order: 'desc',
+      });
+      setPickerFunds(data.items);
+      setPickerTotal(data.total);
+    } catch (e: unknown) {
+      setError((e as Error).message);
+    } finally {
+      setPickerLoading(false);
+    }
+  }
+
   async function handleRefreshMarket() {
     try {
       setRefreshingMarket(true);
       setError('');
-      await refreshMarket();
-      await loadFunds();
-      await loadWatchlist();
-      if (detailCode) {
-        await loadDetail(detailCode);
+      const response = await refreshMarket();
+      if (response.status === 'completed') {
+        setFundsCache({});
+        setWatchlistCache({});
+        await Promise.all([
+          loadFunds(riskRef.current, { apply: true, force: true }),
+          loadWatchlist(riskRef.current, { apply: true, force: true }),
+        ]);
+        await loadSectorHeat();
+        if (detailCode) await loadDetail(detailCode);
+        setRefreshingMarket(false);
+        return;
       }
+      void pollRefreshCompletion();
+    } catch (e: unknown) {
+      setError((e as Error).message);
+      setRefreshingMarket(false);
+    }
+  }
+
+  async function pollRefreshCompletion() {
+    try {
+      for (let attempt = 0; attempt < 60; attempt += 1) {
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        const status = await fetchRefreshMarketStatus();
+        if (status.status === 'completed') {
+          setFundsCache({});
+          setWatchlistCache({});
+          await Promise.all([
+            loadFunds(riskRef.current, { apply: true, force: true }),
+            loadWatchlist(riskRef.current, { apply: true, force: true }),
+          ]);
+          await loadSectorHeat();
+          if (detailCode) await loadDetail(detailCode);
+          return;
+        }
+        if (status.status === 'failed') {
+          throw new Error(status.error || '行情后台刷新失败');
+        }
+      }
+      throw new Error('行情刷新超时，请稍后再试');
     } catch (e: unknown) {
       setError((e as Error).message);
     } finally {
@@ -125,6 +283,11 @@ export function App() {
   function handleViewDetail(code: string) {
     setDetailCode(code);
     setPage('详情');
+  }
+
+  function handlePickerFilterChange(nextFilters: PickerFilters) {
+    setPickerPage(1);
+    setPickerFilters(nextFilters);
   }
 
   function handleBackFromDetail() {
@@ -175,14 +338,20 @@ export function App() {
             refreshingMarket={refreshingMarket}
             onViewDetail={handleViewDetail}
             onAddToWatchlist={handleAddWatchlist}
+            sectorHeat={sectorHeat}
           />
         )}
 
         {page === '选基' && (
           <PickerPage
-            funds={funds}
-            loading={loading}
-            onFilterChange={() => {}}
+            funds={pickerFunds}
+            total={pickerTotal}
+            page={pickerPage}
+            pageSize={pickerPageSize}
+            loading={pickerLoading}
+            filters={pickerFilters}
+            onFilterChange={handlePickerFilterChange}
+            onPageChange={setPickerPage}
             onViewDetail={handleViewDetail}
             onAddToWatchlist={handleAddWatchlist}
           />

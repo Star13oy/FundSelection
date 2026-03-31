@@ -1,4 +1,4 @@
-import type { FundDetail, FundQuery, FundsListResponse, FundScore, MarketRefreshResponse, RiskProfile, WatchlistScore } from "./types.ts";
+import type { FundDetail, FundQuery, FundsListResponse, FundScore, MarketRefreshResponse, RiskProfile, SectorHeatItem, WatchlistScore } from "./types.ts";
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? "/api/v1";
 
@@ -16,7 +16,7 @@ async function requestJson<T>(url: string, init: RequestInit | undefined, fallba
   return resp.json() as Promise<T>;
  } catch (error) {
   if (error instanceof TypeError) {
-   throw new Error(`${fallback}（无法连接后端，请确认 8000 端口服务已启动）`);
+   throw new Error(`${fallback}（无法连接后端，请确认服务已启动）`);
   }
   throw error;
  }
@@ -80,4 +80,12 @@ export async function removeWatchlist(code: string): Promise<void> {
 
 export async function refreshMarket(): Promise<MarketRefreshResponse> {
  return requestJson<MarketRefreshResponse>(`${API_BASE}/market/refresh`, { method: "POST" }, "刷新行情失败");
+}
+
+export async function fetchRefreshMarketStatus(): Promise<MarketRefreshResponse> {
+ return requestJson<MarketRefreshResponse>(`${API_BASE}/market/refresh-status`, undefined, "获取行情刷新状态失败");
+}
+
+export async function fetchSectorHeat(): Promise<SectorHeatItem[]> {
+ return requestJson<SectorHeatItem[]>(`${API_BASE}/market/sector-heat`, undefined, "加载板块热度失败");
 }

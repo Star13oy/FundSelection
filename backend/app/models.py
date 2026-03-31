@@ -78,12 +78,16 @@ class FundScore(BaseModel):
     name: str
     channel: Channel
     category: str
+    fund_type: FundType
+    scale_billion: float
     risk_level: str
     liquidity_label: str
     final_score: float
     base_score: float
     policy_score: float
     overlay_weight: float
+    one_year_return: float
+    max_drawdown: float
     explanation: Explanation
     market: MarketSnapshot | None = None
 
@@ -117,6 +121,15 @@ class WatchlistScore(FundScore):
 
 class WatchlistItem(BaseModel):
     code: str
+
+
+class SectorHeatItem(BaseModel):
+    label: str
+    code: str
+    change_pct: float | None = None
+    current_price: float | None = None
+    quote_time: str | None = None
+    source: str | None = None
 
 
 class PolicyTimestampCheckRequest(BaseModel):

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import os
 from datetime import datetime, timedelta
 from typing import Iterable
 
@@ -13,6 +14,31 @@ from app.models import FactorMetrics, Fund, MarketSnapshot, PolicyMetrics
 from app.universe import load_fund_universe
 
 logger = logging.getLogger(__name__)
+_FUNDS_CACHE_TTL_SECONDS = 60
+_funds_cache: dict[str, object] = {"items": None, "fetched_at": None}
+
+
+def _uses_mysql_params() -> bool:
+    return os.getenv("DB_TYPE", "sqlite").lower() == "mysql"
+
+
+def _sql_params(columns: list[str], payload: dict[str, object]) -> dict[str, object] | tuple[object, ...]:
+    if _uses_mysql_params():
+        return tuple(payload[column] for column in columns)
+    return payload
+
+
+def _sql_param_rows(
+    columns: list[str], payloads: list[dict[str, object]]
+) -> list[dict[str, object] | tuple[object, ...]]:
+    if _uses_mysql_params():
+        return [tuple(payload[column] for column in columns) for payload in payloads]
+    return payloads
+
+
+def _invalidate_funds_cache() -> None:
+    _funds_cache["items"] = None
+    _funds_cache["fetched_at"] = None
 
 
 def _row_to_fund(row: dict[str, object]) -> Fund:
@@ -243,11 +269,12 @@ def _store_single_fund(fund: Fund) -> None:
             update_columns = columns[1:]  # All columns except the primary key (code)
             sql = get_upsert_syntax("funds", columns, update_columns)
 
-            cursor.execute(sql, payload)
+            cursor.execute(sql, _sql_params(columns, payload))
 
 
 def sync_fund_universe() -> dict[str, int]:
     seed_funds(force=True)
+    _invalidate_funds_cache()
     with connect() as conn:
         with conn.cursor() as cursor:
             cursor.execute("SELECT COUNT(*) AS count_rows FROM funds")
@@ -286,7 +313,8 @@ def refresh_market_quotes() -> dict[str, object]:
                 sql = get_upsert_syntax("market_quotes", columns, update_columns)
 
                 for start in range(0, len(payloads), 500):
-                    cursor.executemany(sql, payloads[start : start + 500])
+                    batch = payloads[start : start + 500]
+                    cursor.executemany(sql, _sql_param_rows(columns, batch))
     finally:
         clear_market_context()
 
@@ -315,11 +343,20 @@ def refresh_market_quotes_if_stale(max_age_minutes: int = 30) -> None:
 
 
 def all_funds() -> list[Fund]:
+    cached_items = _funds_cache.get("items")
+    cached_at = _funds_cache.get("fetched_at")
+    if isinstance(cached_items, list) and isinstance(cached_at, datetime):
+        if datetime.now() - cached_at < timedelta(seconds=_FUNDS_CACHE_TTL_SECONDS):
+            return cached_items
+
     with connect() as conn:
         with conn.cursor() as cursor:
             cursor.execute("SELECT * FROM funds ORDER BY code")
             rows = cursor.fetchall()
-    return [_row_to_fund(row) for row in rows]
+    funds = [_row_to_fund(row) for row in rows]
+    _funds_cache["items"] = funds
+    _funds_cache["fetched_at"] = datetime.now()
+    return funds
 
 
 def get_fund(code: str) -> Fund | None:
@@ -392,8 +429,9 @@ def add_watchlist(code: str) -> bool:
         return False
     with connect() as conn:
         with conn.cursor() as cursor:
-            sql = get_insert_ignore_syntax("watchlist", ["code"])
-            cursor.execute(sql, {"code": code})
+            columns = ["code"]
+            sql = get_insert_ignore_syntax("watchlist", columns)
+            cursor.execute(sql, _sql_params(columns, {"code": code}))
     return True
 
 
